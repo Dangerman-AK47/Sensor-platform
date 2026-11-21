@@ -1,0 +1,32 @@
+# Environment variables & secrets
+.env
+.env.local
+.env.production
+*.env
+
+# Logs & temp files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor folders
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Node / Vendor dependencies
+node_modules/
+vendor/
+
+# Storage upload files (preserve directory with .gitkeep)
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep

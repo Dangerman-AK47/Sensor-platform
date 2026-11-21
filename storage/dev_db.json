@@ -1,0 +1,996 @@
+{
+  "admin_accounts": [
+    {
+      "id": "admin-root-0001",
+      "username": "admin",
+      "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "SUPER_ADMIN",
+      "is_active": 1,
+      "created_at": "2026-10-17T07:20:10.311Z",
+      "last_login_at": "2026-10-17T07:20:10.312Z",
+      "raw_password": "admin123"
+    }
+  ],
+  "registered_devices": [
+    {
+      "id": "dev-1792569332002",
+      "device_id": "ESP32-DEVICE-2002",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-21T07:55:32.002Z",
+      "token_hash": "a1d5c18475b810e2c5eb49cd6b3498c93d4b12a8e2a037e8f174cfeeec6b0ac6",
+      "sensor_version": "1.1.1",
+      "firmware_version": "4.0.0",
+      "hardware_model": "ESP32-DevKit-V1",
+      "metadata": {},
+      "upload_count": 0,
+      "total_storage_bytes": 0,
+      "last_seen_at": "2026-10-21T07:55:32.009Z"
+    },
+    {
+      "id": "dev-1792476058771",
+      "device_id": "SENSOR-TEST-3678",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-20T06:00:58.771Z",
+      "token_hash": "c24661787270bd05372fb8d4f9652f68658c1d19c61b2150ef3ec9b0ef2cba95",
+      "sensor_version": "1.0.0",
+      "firmware_version": "2.1.0",
+      "hardware_model": "ESP32-S3",
+      "metadata": {},
+      "upload_count": 1,
+      "total_storage_bytes": 61,
+      "last_seen_at": "2026-10-20T06:00:58.788Z",
+      "last_upload_at": "2026-10-20T06:00:58.790Z"
+    },
+    {
+      "id": "dev-1792223619979",
+      "device_id": "SENSOR-TEST-99",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-17T07:53:39.979Z",
+      "token_hash": "f909a818203e06c009e5c36fa7b3a8752e1eb12ffdc6711e7d988ae8a02839c9",
+      "sensor_version": "1.0.0",
+      "firmware_version": "2.1.0",
+      "hardware_model": "ESP32-S3-DevKit",
+      "metadata": {
+        "location": "Testing Lab Bench",
+        "registered_via": "web_testing_console"
+      },
+      "upload_count": 0,
+      "total_storage_bytes": 0,
+      "last_seen_at": "2026-10-17T07:53:39.979Z"
+    },
+    {
+      "id": "dev-001",
+      "device_id": "SENSOR-001",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-10T07:20:10.312Z",
+      "token_hash": "f43a658c304b03e5886b1a1c1b629cfca358b48a31494ece938b211a144ab00b",
+      "first_seen_at": "2026-10-10T07:20:10.312Z",
+      "last_seen_at": "2026-10-17T07:21:15.127Z",
+      "sensor_version": "1.0.0",
+      "firmware_version": "2.1.0",
+      "hardware_model": "ESP32-S3",
+      "metadata": {
+        "location": "Lab Bench A",
+        "sensor_type": "BME680"
+      },
+      "upload_count": 12,
+      "total_storage_bytes": 4194304,
+      "last_upload_at": "2026-10-17T06:20:10.312Z"
+    },
+    {
+      "id": "dev-002",
+      "device_id": "SENSOR-002",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-12T07:20:10.312Z",
+      "token_hash": "9b4380b8b1b499d6c373904bccdc4d681a458cd4e95f7e0e1bebac88f676ec44",
+      "first_seen_at": "2026-10-12T07:20:10.312Z",
+      "last_seen_at": "2026-10-17T07:10:10.312Z",
+      "sensor_version": "1.0.0",
+      "firmware_version": "2.1.0",
+      "hardware_model": "ESP32-WROOM-32D",
+      "metadata": {
+        "location": "Roof Weather Station",
+        "sensor_type": "DHT22"
+      },
+      "upload_count": 8,
+      "total_storage_bytes": 2097152,
+      "last_upload_at": "2026-10-17T05:20:10.312Z"
+    },
+    {
+      "id": "dev-003",
+      "device_id": "SENSOR-003",
+      "status": "DEACTIVE",
+      "registered_at": "2026-10-03T07:20:10.312Z",
+      "token_hash": null,
+      "first_seen_at": "2026-10-03T07:20:10.312Z",
+      "last_seen_at": "2026-10-14T07:20:10.312Z",
+      "sensor_version": "0.9.1",
+      "firmware_version": "1.8.0",
+      "hardware_model": "ESP32-DevKitC",
+      "metadata": {
+        "location": "Warehouse Bay 3",
+        "decommission_reason": "Battery failure"
+      },
+      "upload_count": 3,
+      "total_storage_bytes": 524288,
+      "last_upload_at": "2026-10-13T07:20:10.312Z"
+    },
+    {
+      "id": "dev-1792221619256",
+      "device_id": "SENSOR-TEST-6264",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-17T07:20:19.256Z",
+      "token_hash": "0315d42a061ab914eaf6bc68ab00d424add0955491176ddd2d9a92927156417d",
+      "upload_count": 1,
+      "total_storage_bytes": 61,
+      "last_seen_at": "2026-10-17T07:20:19.282Z",
+      "last_upload_at": "2026-10-17T07:20:19.283Z"
+    },
+    {
+      "id": "dev-1792221652176",
+      "device_id": "SENSOR-TEST-7441",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-17T07:20:52.176Z",
+      "token_hash": "b596df1e8ba0695270f2cfb42de93e6d272272f5e4bbb644af1a09b663dd371a",
+      "upload_count": 1,
+      "total_storage_bytes": 61,
+      "last_seen_at": "2026-10-17T07:20:52.193Z",
+      "last_upload_at": "2026-10-17T07:20:52.194Z"
+    },
+    {
+      "id": "dev-1792222637067",
+      "device_id": "SENSOR-TEST-3344",
+      "status": "ACTIVE",
+      "registered_at": "2026-10-17T07:37:17.067Z",
+      "token_hash": "c1eec3f4df440ba1f799cdcad204b557fa1946f5149081832b6da037089fa84a",
+      "sensor_version": "1.0.0",
+      "firmware_version": "2.1.0",
+      "hardware_model": "ESP32-S3",
+      "metadata": {},
+      "upload_count": 1,
+      "total_storage_bytes": 61,
+      "last_seen_at": "2026-10-17T07:37:17.084Z",
+      "last_upload_at": "2026-10-17T07:37:17.085Z"
+    }
+  ],
+  "device_registration_requests": [
+    {
+      "id": "req-1792569332002",
+      "device_id": "ESP32-DEVICE-2002",
+      "status": "AUTO_APPROVED",
+      "submitted_at": "2026-10-21T07:55:32.002Z",
+      "reviewed_at": "2026-10-21T07:55:32.002Z",
+      "reviewed_by": "system-auto-approver",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "0.0.0",
+        "firmwareVersion": "4.0.0",
+        "hardwareModel": "ESP32-DevKit-V1",
+        "metadata": {}
+      }
+    },
+    {
+      "id": "req-1792476058771",
+      "device_id": "SENSOR-TEST-3678",
+      "status": "AUTO_APPROVED",
+      "submitted_at": "2026-10-20T06:00:58.771Z",
+      "reviewed_at": "2026-10-20T06:00:58.771Z",
+      "reviewed_by": "system-auto-approver",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3",
+        "metadata": {}
+      }
+    },
+    {
+      "id": "req-1792223619979",
+      "device_id": "SENSOR-TEST-99",
+      "status": "AUTO_APPROVED",
+      "submitted_at": "2026-10-17T07:53:39.979Z",
+      "reviewed_at": "2026-10-17T07:53:39.979Z",
+      "reviewed_by": "system-auto-approver",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3-DevKit",
+        "metadata": {
+          "location": "Testing Lab Bench",
+          "registered_via": "web_testing_console"
+        }
+      }
+    },
+    {
+      "id": "req-1792222983265",
+      "device_id": "SENSOR-TEST-99",
+      "status": "PENDING",
+      "submitted_at": "2026-10-17T07:43:03.265Z",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3-DevKit",
+        "metadata": {
+          "location": "Testing Lab Bench",
+          "registered_via": "web_testing_console"
+        }
+      }
+    },
+    {
+      "id": "req-1792222637062",
+      "device_id": "SENSOR-TEST-3344",
+      "status": "APPROVED",
+      "submitted_at": "2026-10-17T07:37:17.062Z",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3",
+        "metadata": {}
+      },
+      "reviewed_at": "2026-10-17T07:37:17.067Z",
+      "reviewed_by_admin_id": "admin-root-0001"
+    },
+    {
+      "id": "req-1792221652170",
+      "device_id": "SENSOR-TEST-7441",
+      "status": "APPROVED",
+      "submitted_at": "2026-10-17T07:20:52.170Z",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3"
+      },
+      "reviewed_at": "2026-10-17T07:20:52.176Z",
+      "reviewed_by_admin_id": "admin-root-0001"
+    },
+    {
+      "id": "req-1792221619252",
+      "device_id": "SENSOR-TEST-6264",
+      "status": "APPROVED",
+      "submitted_at": "2026-10-17T07:20:19.252Z",
+      "requester_metadata": {
+        "ip": "127.0.0.1",
+        "sensorVersion": "1.0.0",
+        "firmwareVersion": "2.1.0",
+        "hardwareModel": "ESP32-S3"
+      },
+      "reviewed_at": "2026-10-17T07:20:19.256Z",
+      "reviewed_by_admin_id": "admin-root-0001"
+    },
+    {
+      "id": "req-001",
+      "device_id": "SENSOR-004",
+      "status": "PENDING",
+      "submitted_at": "2026-10-17T06:45:10.312Z",
+      "reviewed_at": null,
+      "review_reason": null,
+      "reviewed_by_admin_id": null,
+      "requester_metadata": {
+        "ip": "192.168.1.155",
+        "hardwareModel": "ESP32-C3",
+        "firmwareVersion": "3.0.0"
+      }
+    },
+    {
+      "id": "req-002",
+      "device_id": "SENSOR-001",
+      "status": "APPROVED",
+      "submitted_at": "2026-10-10T07:20:10.312Z",
+      "reviewed_at": "2026-10-10T07:20:10.312Z",
+      "review_reason": "Authorized for Lab testing",
+      "reviewed_by_admin_id": "admin-root-0001",
+      "requester_metadata": {
+        "ip": "192.168.1.101",
+        "hardwareModel": "ESP32-S3"
+      }
+    }
+  ],
+  "global_sensor_configurations": [
+    {
+      "id": "cfg-1792222945794",
+      "config_version": "1.2.0",
+      "status": "INACTIVE",
+      "original_file_name": "sensor_config_v1.2.0.json",
+      "storage_key": "configs/2026/10/sensor_config_v1.2.0.json",
+      "mime_type": "application/json",
+      "file_size_bytes": 2048,
+      "checksum": "8bf13654b35783ddf82417889cf57e709dfadb4bb884b11f6445169e9fbf7ed8",
+      "uploaded_by_admin_id": "admin-root-0001",
+      "created_at": "2026-10-17T07:42:25.794Z"
+    },
+    {
+      "id": "cfg-001",
+      "config_version": "1.0.0",
+      "status": "ARCHIVED",
+      "original_file_name": "sensor_config_v1.0.0.json",
+      "storage_key": "configs/2026/09/sensor_config_v1.0.0.json",
+      "mime_type": "application/json",
+      "file_size_bytes": 1024,
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uploaded_by_admin_id": "admin-root-0001",
+      "activated_by_admin_id": "admin-root-0001",
+      "activated_at": "2026-10-03T07:20:10.312Z",
+      "created_at": "2026-10-03T07:20:10.312Z"
+    },
+    {
+      "id": "cfg-002",
+      "config_version": "1.1.0",
+      "status": "ACTIVE",
+      "original_file_name": "sensor_config_v1.1.0.json",
+      "storage_key": "configs/2026/10/sensor_config_v1.1.0.json",
+      "mime_type": "application/json",
+      "file_size_bytes": 2048,
+      "checksum": "7d793037a0760186574b0282f2f435e7b1e50774690f69799f4eb6192de6974a",
+      "uploaded_by_admin_id": "admin-root-0001",
+      "activated_by_admin_id": "admin-root-0001",
+      "activated_at": "2026-10-14T07:20:10.312Z",
+      "created_at": "2026-10-14T07:20:10.312Z"
+    }
+  ],
+  "uploaded_file_records": [
+    {
+      "id": "rec-1792476058790",
+      "upload_record_id": "UPL-1792476058790",
+      "registered_device_id": "dev-1792476058771",
+      "device_id": "SENSOR-TEST-3678",
+      "original_file_name": "upload_1792476058790.bin",
+      "storage_key": "uploads\\upload_1792476058790.bin",
+      "mime_type": "application/octet-stream",
+      "file_size_bytes": 61,
+      "checksum": "cb94ce0620a7797c4f225c3dd1f79fb3452fdbdcb3fecdd6e721bc1f2325941a",
+      "uploaded_at": "2026-10-20T06:00:58.790Z"
+    },
+    {
+      "id": "rec-1792222637085",
+      "upload_record_id": "UPL-1792222637084",
+      "registered_device_id": "dev-1792222637067",
+      "device_id": "SENSOR-TEST-3344",
+      "original_file_name": "upload_1792222637084.bin",
+      "storage_key": "uploads\\upload_1792222637084.bin",
+      "mime_type": "application/octet-stream",
+      "file_size_bytes": 61,
+      "checksum": "cb94ce0620a7797c4f225c3dd1f79fb3452fdbdcb3fecdd6e721bc1f2325941a",
+      "uploaded_at": "2026-10-17T07:37:17.085Z"
+    },
+    {
+      "id": "rec-1792221652194",
+      "upload_record_id": "UPL-1792221652194",
+      "registered_device_id": "dev-1792221652176",
+      "device_id": "SENSOR-TEST-7441",
+      "original_file_name": "upload_1792221652194.bin",
+      "storage_key": "uploads\\upload_1792221652194.bin",
+      "mime_type": "application/octet-stream",
+      "file_size_bytes": 61,
+      "checksum": "cb94ce0620a7797c4f225c3dd1f79fb3452fdbdcb3fecdd6e721bc1f2325941a",
+      "uploaded_at": "2026-10-17T07:20:52.194Z"
+    },
+    {
+      "id": "rec-1792221619283",
+      "upload_record_id": "UPL-1792221619283",
+      "registered_device_id": "dev-1792221619256",
+      "device_id": "SENSOR-TEST-6264",
+      "original_file_name": "upload_1792221619283.bin",
+      "storage_key": "uploads\\upload_1792221619283.bin",
+      "mime_type": "application/octet-stream",
+      "file_size_bytes": 61,
+      "checksum": "cb94ce0620a7797c4f225c3dd1f79fb3452fdbdcb3fecdd6e721bc1f2325941a",
+      "uploaded_at": "2026-10-17T07:20:19.283Z"
+    },
+    {
+      "id": "rec-001",
+      "upload_record_id": "UPL-20261017-0001",
+      "registered_device_id": "dev-001",
+      "device_id": "SENSOR-001",
+      "original_file_name": "telemetry_20261017_0900.csv",
+      "storage_key": "uploads/2026/10/17/telemetry_sample.csv",
+      "mime_type": "text/csv",
+      "file_size_bytes": 262144,
+      "checksum": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+      "uploaded_at": "2026-10-17T04:20:10.312Z"
+    }
+  ],
+  "daily_metrics": [
+    {
+      "device_id": "SENSOR-001",
+      "result": "CURRENT",
+      "total_checks": 48,
+      "last_date": "2026-10-17T07:20:10.312Z"
+    },
+    {
+      "device_id": "SENSOR-002",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 24,
+      "last_date": "2026-10-17T07:20:10.312Z"
+    },
+    {
+      "device_id": "SENSOR-003",
+      "result": "SENSOR_DEACTIVATED",
+      "total_checks": 6,
+      "last_date": "2026-10-17T07:20:10.312Z"
+    },
+    {
+      "device_id": "SENSOR-TEST-6264",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 1,
+      "last_date": "2026-10-17T07:20:19.263Z"
+    },
+    {
+      "device_id": "SENSOR-TEST-7441",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 1,
+      "last_date": "2026-10-17T07:20:52.183Z"
+    },
+    {
+      "device_id": "SENSOR-001",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 1,
+      "last_date": "2026-10-17T07:21:15.128Z"
+    },
+    {
+      "device_id": "SENSOR-TEST-3344",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 1,
+      "last_date": "2026-10-17T07:37:17.074Z"
+    },
+    {
+      "device_id": "SENSOR-TEST-3678",
+      "result": "UPDATE_AVAILABLE",
+      "total_checks": 1,
+      "last_date": "2026-10-20T06:00:58.782Z"
+    }
+  ],
+  "audit_events": [
+    {
+      "id": "aud-1792569367531",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:56:07.531Z"
+    },
+    {
+      "id": "aud-1792569332002",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "ESP32-DEVICE-2002",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"ESP32-DEVICE-2002\"}",
+      "created_at": "2026-10-21T07:55:32.002Z"
+    },
+    {
+      "id": "aud-1792569311175",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:55:11.175Z"
+    },
+    {
+      "id": "aud-1792569311173",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_ADMIN_CREDENTIALS",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"admin\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:55:11.173Z"
+    },
+    {
+      "id": "aud-1792569311170",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_USER_CREDENTIALS",
+      "entity_type": "PORTAL_USER",
+      "entity_id": "user-portal-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"user\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:55:11.170Z"
+    },
+    {
+      "id": "aud-1792569311164",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-1076",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-1076\",\"id\":\"dev-1792569311147\"}",
+      "created_at": "2026-10-21T07:55:11.164Z"
+    },
+    {
+      "id": "aud-1792569311147",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-1076",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-1076\"}",
+      "created_at": "2026-10-21T07:55:11.147Z"
+    },
+    {
+      "id": "aud-1792569311142",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:55:11.142Z"
+    },
+    {
+      "id": "aud-1792568370828",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:39:30.828Z"
+    },
+    {
+      "id": "aud-1792568370826",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_ADMIN_CREDENTIALS",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"admin\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:39:30.826Z"
+    },
+    {
+      "id": "aud-1792568370820",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_USER_CREDENTIALS",
+      "entity_type": "PORTAL_USER",
+      "entity_id": "user-portal-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"user\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:39:30.820Z"
+    },
+    {
+      "id": "aud-1792568370814",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-9125",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-9125\",\"id\":\"dev-1792568370793\"}",
+      "created_at": "2026-10-21T07:39:30.814Z"
+    },
+    {
+      "id": "aud-1792568370793",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-9125",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-9125\"}",
+      "created_at": "2026-10-21T07:39:30.793Z"
+    },
+    {
+      "id": "aud-1792568370788",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:39:30.788Z"
+    },
+    {
+      "id": "aud-1792567012484",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:16:52.484Z"
+    },
+    {
+      "id": "aud-1792567012481",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_ADMIN_CREDENTIALS",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"admin\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:16:52.481Z"
+    },
+    {
+      "id": "aud-1792567012478",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_USER_CREDENTIALS",
+      "entity_type": "PORTAL_USER",
+      "entity_id": "user-portal-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"user\",\"password_changed\":true}",
+      "created_at": "2026-10-21T07:16:52.478Z"
+    },
+    {
+      "id": "aud-1792567012472",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-4649",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-4649\",\"id\":\"dev-1792567012453\"}",
+      "created_at": "2026-10-21T07:16:52.472Z"
+    },
+    {
+      "id": "aud-1792567012453",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-4649",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-4649\"}",
+      "created_at": "2026-10-21T07:16:52.453Z"
+    },
+    {
+      "id": "aud-1792567012447",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-21T07:16:52.447Z"
+    },
+    {
+      "id": "aud-1792476172417",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-20T06:02:52.417Z"
+    },
+    {
+      "id": "aud-1792476172416",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_ADMIN_CREDENTIALS",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"admin\",\"password_changed\":true}",
+      "created_at": "2026-10-20T06:02:52.416Z"
+    },
+    {
+      "id": "aud-1792476172412",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_USER_CREDENTIALS",
+      "entity_type": "PORTAL_USER",
+      "entity_id": "user-portal-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"user\",\"password_changed\":true}",
+      "created_at": "2026-10-20T06:02:52.412Z"
+    },
+    {
+      "id": "aud-1792476172406",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-7712",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-7712\",\"id\":\"dev-1792476172384\"}",
+      "created_at": "2026-10-20T06:02:52.406Z"
+    },
+    {
+      "id": "aud-1792476172384",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-7712",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-7712\"}",
+      "created_at": "2026-10-20T06:02:52.384Z"
+    },
+    {
+      "id": "aud-1792476172380",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-20T06:02:52.380Z"
+    },
+    {
+      "id": "aud-1792476058771",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-3678",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3678\"}",
+      "created_at": "2026-10-20T06:00:58.771Z"
+    },
+    {
+      "id": "aud-1792475989301",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-20T05:59:49.301Z"
+    },
+    {
+      "id": "aud-1792475989299",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_ADMIN_CREDENTIALS",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"admin\",\"password_changed\":true}",
+      "created_at": "2026-10-20T05:59:49.299Z"
+    },
+    {
+      "id": "aud-1792475989295",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPDATE_USER_CREDENTIALS",
+      "entity_type": "PORTAL_USER",
+      "entity_id": "user-portal-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"username\":\"user\",\"password_changed\":true}",
+      "created_at": "2026-10-20T05:59:49.295Z"
+    },
+    {
+      "id": "aud-1792475989288",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-3260",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3260\",\"id\":\"dev-1792475989249\"}",
+      "created_at": "2026-10-20T05:59:49.288Z"
+    },
+    {
+      "id": "aud-1792475989249",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-3260",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3260\"}",
+      "created_at": "2026-10-20T05:59:49.249Z"
+    },
+    {
+      "id": "aud-1792475989245",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-20T05:59:49.245Z"
+    },
+    {
+      "id": "aud-1792223635163",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:53:55.163Z"
+    },
+    {
+      "id": "aud-1792223619979",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-99",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-99\"}",
+      "created_at": "2026-10-17T07:53:39.979Z"
+    },
+    {
+      "id": "aud-1792223598360",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-3293",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3293\",\"id\":\"dev-1792223598341\"}",
+      "created_at": "2026-10-17T07:53:18.360Z"
+    },
+    {
+      "id": "aud-1792223598341",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-3293",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3293\"}",
+      "created_at": "2026-10-17T07:53:18.341Z"
+    },
+    {
+      "id": "aud-1792223598335",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:53:18.335Z"
+    },
+    {
+      "id": "aud-1792223568286",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "DELETE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-7809",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-7809\",\"id\":\"dev-1792223568263\"}",
+      "created_at": "2026-10-17T07:52:48.286Z"
+    },
+    {
+      "id": "aud-1792223568263",
+      "admin_id": "system",
+      "username": "auto-approver",
+      "action": "AUTO_APPROVE_DEVICE",
+      "entity_type": "DEVICE",
+      "entity_id": "SENSOR-TEST-7809",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-7809\"}",
+      "created_at": "2026-10-17T07:52:48.263Z"
+    },
+    {
+      "id": "aud-1792223568259",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:52:48.259Z"
+    },
+    {
+      "id": "aud-1792223522675",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:52:02.675Z"
+    },
+    {
+      "id": "aud-1792222945794",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "UPLOAD_CONFIG",
+      "entity_type": "GLOBAL_CONFIG",
+      "entity_id": "cfg-1792222945794",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"version\":\"1.2.0\"}",
+      "created_at": "2026-10-17T07:42:25.794Z"
+    },
+    {
+      "id": "aud-1792222757825",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:39:17.825Z"
+    },
+    {
+      "id": "aud-1792222694693",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:38:14.693Z"
+    },
+    {
+      "id": "aud-1792222685457",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:38:05.457Z"
+    },
+    {
+      "id": "aud-1792222637067",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "APPROVE_DEVICE",
+      "entity_type": "DEVICE_REQUEST",
+      "entity_id": "req-1792222637062",
+      "ip_address": "127.0.0.1",
+      "metadata": "{\"device_id\":\"SENSOR-TEST-3344\"}",
+      "created_at": "2026-10-17T07:37:17.067Z"
+    },
+    {
+      "id": "aud-1792222637057",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "metadata": "null",
+      "created_at": "2026-10-17T07:37:17.057Z"
+    },
+    {
+      "id": "aud-001",
+      "admin_id": "admin-root-0001",
+      "username": "admin",
+      "action": "LOGIN",
+      "entity_type": "ADMIN_ACCOUNT",
+      "entity_id": "admin-root-0001",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-10-17T07:20:10.312Z"
+    }
+  ],
+  "portal_users": [
+    {
+      "id": "user-portal-0001",
+      "username": "user",
+      "password_hash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+      "raw_password": "password",
+      "role": "USER",
+      "is_active": 1
+    }
+  ]
+}

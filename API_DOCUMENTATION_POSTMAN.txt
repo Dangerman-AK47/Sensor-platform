@@ -1,0 +1,798 @@
+================================================================================
+           ESP32 SENSOR PLATFORM & ADMIN API DOCUMENTATION (POSTMAN FORMAT)
+================================================================================
+
+Base URL (Production) : https://realtimeprojectsolutions.com
+Base URL (Local Dev)  : http://localhost:8000
+
+Postman Collection Import File:
+  postman/sensor_platform_collection.json
+
+--------------------------------------------------------------------------------
+POSTMAN ENVIRONMENT VARIABLES
+--------------------------------------------------------------------------------
+Variable Name   Default Value / Example
+-------------   ----------------------------------------------------------------
+baseUrl         https://realtimeprojectsolutions.com
+sensorToken     <64-hex Bearer token returned from /api/v1/sensors/register>
+deviceId        ESP32-DEVICE-001
+
+
+================================================================================
+SECTION 1: IOT SENSOR APIS (/api/v1/sensors/*)
+Authentication: Sensor Bearer Token ("Authorization: Bearer <token>")
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1 Register Sensor (Auto-Approval)
+--------------------------------------------------------------------------------
+Description: Registers a new ESP32 sensor. If approved, immediately returns the
+             Bearer token.
+Method     : POST
+URL        : {{baseUrl}}/api/v1/sensors/register
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "deviceId": "ESP32-DEVICE-001",
+  "sensorVersion": "1.0.0",
+  "firmwareVersion": "4.0.0",
+  "hardwareModel": "ESP32-DevKit-V1",
+  "metadata": {
+    "location": "Testing Lab"
+  }
+}
+
+Expected Response (201 Created):
+{
+  "success": true,
+  "status": "AUTO_APPROVED",
+  "deviceId": "ESP32-DEVICE-001",
+  "token": "4f8a92b...64_hex_characters...",
+  "requestId": "req-1792476058771",
+  "message": "Sensor automatically approved! Store your Bearer token securely."
+}
+
+Conflict Response (409 Conflict):
+{
+  "success": false,
+  "error": "Sensor already registered and ACTIVE",
+  "status": 409
+}
+
+
+--------------------------------------------------------------------------------
+1.2 Sensor Heartbeat / Ping
+--------------------------------------------------------------------------------
+Description: Sends periodic telemetry ping (heap, RSSI, uptime) and automatically
+             synchronizes the latest sensor_version with the admin website.
+Method     : POST
+URL        : {{baseUrl}}/api/v1/sensors/heartbeat
+Headers    :
+  Content-Type: application/json
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+
+Body (raw JSON):
+{
+  "deviceId": "ESP32-DEVICE-001",
+  "sensorVersion": "1.1.1",
+  "firmwareVersion": "4.0.0",
+  "hardwareModel": "ESP32-DevKit-V1",
+  "metadata": {
+    "freeHeap": 184320,
+    "rssi": -55,
+    "uptime": 3600
+  }
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "ok": true,
+    "deviceId": "ESP32-DEVICE-001",
+    "sensorStatus": "ACTIVE",
+    "serverTime": "2026-11-11T05:35:00+00:00",
+    "timestamp": "2026-11-11T05:35:00+00:00"
+  },
+  "message": "Success"
+}
+
+
+--------------------------------------------------------------------------------
+1.3 Check Configuration Version
+--------------------------------------------------------------------------------
+Description: Checks if an OTA configuration update is available on the server.
+Method     : POST
+URL        : {{baseUrl}}/api/v1/sensors/version-check
+Headers    :
+  Content-Type: application/json
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+
+Body (raw JSON):
+{
+  "currentVersion": "1.0.0"
+}
+
+Expected Response when Update Available (200 OK):
+{
+  "result": "UPDATE_AVAILABLE",
+  "activeVersion": "1.1.1",
+  "reportedVersion": "1.0.0",
+  "downloadUrl": "/api/v1/sensors/configuration/download?deviceId=ESP32-DEVICE-001"
+}
+
+Expected Response when Current (200 OK):
+{
+  "result": "CURRENT",
+  "activeVersion": "1.1.1",
+  "reportedVersion": "1.1.1",
+  "downloadUrl": null
+}
+
+
+--------------------------------------------------------------------------------
+1.4 Download Active Configuration File
+--------------------------------------------------------------------------------
+Description: Streams the active JSON configuration file to the device.
+             Automatically updates sensor_version in database to match active.
+Method     : GET
+URL        : {{baseUrl}}/api/v1/sensors/configuration/download?deviceId={{deviceId}}
+Headers    :
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+
+Expected Response (200 OK):
+Response Headers:
+  Content-Type: application/json
+  Content-Disposition: attachment; filename="sensor_config_v1.1.1.json"
+  X-Config-Version: 1.1.1
+Body:
+  <Raw JSON content of active configuration file>
+
+
+--------------------------------------------------------------------------------
+1.5 Upload Telemetry File (Max 100 MB)
+--------------------------------------------------------------------------------
+Description: Ingests sensor data file (CSV / binary), stores to disk, verifies
+             SHA-256 checksum, and updates device upload count & total bytes.
+Method     : POST
+URL        : {{baseUrl}}/api/v1/sensors/upload
+Headers    :
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+  X-Sensor-Version: 1.1.1
+
+Body (form-data):
+  file : [Select file from disk, e.g. telemetry.csv]
+
+Expected Response (201 Created):
+{
+  "success": true,
+  "uploadId": "UPL-20261111-A8F2",
+  "originalFileName": "telemetry.csv",
+  "fileSizeBytes": 1024,
+  "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "uploadedAt": "2026-11-11T05:35:00+00:00"
+}
+
+
+================================================================================
+SECTION 2: PUBLIC USER PORTAL AUTH APIS (/api/user/*)
+Authentication: Session Cookie ("fv_portal_session")
+================================================================================
+
+--------------------------------------------------------------------------------
+2.1 Portal User Login
+--------------------------------------------------------------------------------
+Description: Authenticates public user to unlock the website homepage & upload views.
+             Default Credentials: user / password
+Method     : POST
+URL        : {{baseUrl}}/api/user/login
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "username": "user",
+  "password": "password"
+}
+
+Expected Response (200 OK):
+Sets-Cookie: fv_portal_session=<session_id>; Path=/; HttpOnly; SameSite=Lax
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-portal-0001",
+      "username": "user",
+      "role": "USER"
+    },
+    "message": "Portal authenticated successfully"
+  },
+  "message": "Unlocked successfully"
+}
+
+
+--------------------------------------------------------------------------------
+2.2 Portal User Session Check
+--------------------------------------------------------------------------------
+Description: Checks if the current visitor is authenticated to view the portal.
+Method     : GET
+URL        : {{baseUrl}}/api/user/session
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "authenticated": true,
+    "user": {
+      "id": "user-portal-0001",
+      "username": "user"
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+2.3 Portal User Logout
+--------------------------------------------------------------------------------
+Description: Locks the portal again by clearing the portal session.
+Method     : POST
+URL        : {{baseUrl}}/api/user/logout
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Signed out of portal successfully"
+}
+
+
+================================================================================
+SECTION 3: ADMIN APIS (/api/admin/*)
+Authentication: Admin Session Cookie ("fv_admin_session" / "PHPSESSID")
+Run 3.1 Admin Login first; Postman will store cookie automatically.
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 Admin Login
+--------------------------------------------------------------------------------
+Description: Authenticates administrator.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/login
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "username": "admin",
+  "password": "yourAdminPassword"
+}
+
+Expected Response (200 OK):
+Sets-Cookie: fv_admin_session=<session_id>; Path=/; HttpOnly; SameSite=Lax
+{
+  "success": true,
+  "data": {
+    "admin": {
+      "id": "admin-root-0001",
+      "username": "admin",
+      "role": "SUPER_ADMIN"
+    },
+    "redirect": "/admin/dashboard"
+  },
+  "message": "Authenticated successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.2 Check Admin Session
+--------------------------------------------------------------------------------
+Description: Verifies active admin session.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/session
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "admin": {
+      "id": "admin-root-0001",
+      "username": "admin",
+      "role": "SUPER_ADMIN"
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.3 Dashboard Metrics & Statistics
+--------------------------------------------------------------------------------
+Description: Fetches summary statistics across the whole platform.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/sensors/stats
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "totalSensors": 3,
+    "activeSensors": 3,
+    "deactiveSensors": 0,
+    "pendingRequests": 0,
+    "approvedRequests": 3,
+    "rejectedRequests": 0,
+    "totalFiles": 12,
+    "totalStorageBytes": 2048576,
+    "uploadsLast24h": 4,
+    "recentUploads": [ ... ],
+    "recentRequests": [ ... ],
+    "activity7d": [ ... ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.4 List Sensors
+--------------------------------------------------------------------------------
+Description: Lists registered sensors with optional search & pagination.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/sensors?search=&status=&page=1&perPage=20
+Query Parameters:
+  search  : (Optional) Substring search on device ID or hardware model
+  status  : (Optional) "ACTIVE" or "DEACTIVE"
+  page    : Page number (default 1)
+  perPage : Items per page (default 20, max 100)
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "devices": [
+      {
+        "id": "dev-001",
+        "device_id": "ESP32-DEVICE-001",
+        "status": "ACTIVE",
+        "registered_at": "2026-10-21 13:18:00",
+        "sensor_version": "1.1.1",
+        "firmware_version": "4.0.0",
+        "hardware_model": "ESP32-DevKit-V1",
+        "upload_count": 2,
+        "total_storage_bytes": 2048,
+        "last_seen_at": "2026-11-11 05:35:00"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "perPage": 20,
+    "totalPages": 1
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.5 Get Single Sensor Details
+--------------------------------------------------------------------------------
+Description: Fetches complete details, hardware metadata, and recent uploads
+             for a single sensor.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "device": {
+      "id": "dev-001",
+      "device_id": "ESP32-DEVICE-001",
+      "status": "ACTIVE",
+      "sensor_version": "1.1.1",
+      "firmware_version": "4.0.0",
+      "hardware_model": "ESP32-DevKit-V1",
+      "metadata": { ... },
+      "recent_uploads": [ ... ]
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.6 Toggle Sensor Status (Deactivate / Activate)
+--------------------------------------------------------------------------------
+Description: Changes sensor operational status. Deactivated sensors receive 403
+             on all sensor endpoints.
+Method     : PATCH (or POST)
+URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}/status
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "status": "DEACTIVE",
+  "reason": "Scheduled maintenance"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Sensor status updated to DEACTIVE"
+}
+
+
+--------------------------------------------------------------------------------
+3.7 Regenerate Sensor Bearer Token
+--------------------------------------------------------------------------------
+Description: Revokes existing token and generates a new CSPRNG 64-hex Bearer token.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}/token
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "deviceId": "ESP32-DEVICE-001",
+    "rawToken": "e7b1a2...new_64_hex_token..."
+  },
+  "message": "New bearer token generated. Save it now; it will not be displayed again."
+}
+
+
+--------------------------------------------------------------------------------
+3.8 Permanently Delete Sensor Device
+--------------------------------------------------------------------------------
+Description: Permanently deletes the sensor device and performs CASCADE purge of
+             all registration requests and uploaded file records.
+Method     : DELETE
+URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Sensor device and all associated telemetry records permanently deleted"
+}
+
+
+--------------------------------------------------------------------------------
+3.9 List Configuration Versions
+--------------------------------------------------------------------------------
+Description: Lists all uploaded sensor configuration files (ACTIVE, INACTIVE, ARCHIVED).
+Method     : GET
+URL        : {{baseUrl}}/api/admin/configuration
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "configurations": [
+      {
+        "id": "cfg-001",
+        "config_version": "1.1.1",
+        "status": "ACTIVE",
+        "original_file_name": "sensor_config_v1.1.1.json",
+        "file_size_bytes": 2048,
+        "activated_at": "2026-10-20 10:00:00"
+      }
+    ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.10 Upload New Configuration File
+--------------------------------------------------------------------------------
+Description: Uploads a new JSON configuration version. Version must follow semver
+             (e.g. 1.2.0) and be strictly higher than current active to activate.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/configuration
+
+Body (form-data):
+  version : 1.2.0 (Text)
+  file    : [Select .json configuration file from disk]
+
+Expected Response (201 Created):
+{
+  "success": true,
+  "data": {
+    "id": "cfg-002",
+    "config_version": "1.2.0",
+    "status": "INACTIVE",
+    "original_file_name": "config_1.2.0.json"
+  },
+  "message": "Configuration uploaded successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.11 Activate Configuration Version
+--------------------------------------------------------------------------------
+Description: Sets the specified configuration as ACTIVE and archives the previous
+             active version. Sensors will receive UPDATE_AVAILABLE on next check.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/configuration/CFG_ID/activate
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "config": {
+      "id": "cfg-002",
+      "config_version": "1.2.0",
+      "status": "ACTIVE"
+    }
+  },
+  "message": "Configuration 1.2.0 activated successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.12 List Uploaded Files
+--------------------------------------------------------------------------------
+Description: Lists telemetry files uploaded by all devices with pagination.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/files?search=&page=1&perPage=20
+Query Parameters:
+  search  : (Optional) Substring match on file name, device ID, or record ID
+  page    : Page number
+  perPage : Items per page
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "files": [
+      {
+        "id": "rec-001",
+        "upload_record_id": "UPL-20261111-A8F2",
+        "device_id": "ESP32-DEVICE-001",
+        "original_file_name": "telemetry.csv",
+        "file_size_bytes": 1024,
+        "checksum": "e3b0c442...",
+        "uploaded_at": "2026-11-11 05:35:00"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "perPage": 20
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.13 Download Uploaded File
+--------------------------------------------------------------------------------
+Description: Downloads raw file from server storage by file record ID.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/files/FILE_ID/download
+
+Expected Response (200 OK):
+  File stream download with original file name & MIME type.
+
+
+--------------------------------------------------------------------------------
+3.14 Delete Uploaded File
+--------------------------------------------------------------------------------
+Description: Deletes file from storage and database. Updates device storage usage.
+Method     : DELETE
+URL        : {{baseUrl}}/api/admin/files/FILE_ID
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "File deleted successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.15 Device Registration History
+--------------------------------------------------------------------------------
+Description: Lists device registration attempts and their status (PENDING, APPROVED,
+             AUTO_APPROVED, REJECTED).
+Method     : GET
+URL        : {{baseUrl}}/api/admin/history?status=&page=1&perPage=20
+Query Parameters:
+  status : (Optional) "PENDING", "APPROVED", "AUTO_APPROVED", "REJECTED"
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "requests": [ ... ],
+    "total": 1,
+    "page": 1,
+    "perPage": 20
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.16 Approve Device Registration Request
+--------------------------------------------------------------------------------
+Description: Manually approves a pending registration request and returns a Bearer token.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/history/REQUEST_ID/approve
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "deviceId": "ESP32-DEVICE-001",
+    "token": "4f8a...64_hex_token...",
+    "status": "APPROVED"
+  },
+  "message": "Registration request approved. Provide the bearer token to device now."
+}
+
+
+--------------------------------------------------------------------------------
+3.17 Reject Device Registration Request
+--------------------------------------------------------------------------------
+Description: Rejects a pending registration request with a recorded reason.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/history/REQUEST_ID/reject
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "reason": "Unauthorized hardware model"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Registration request rejected"
+}
+
+
+--------------------------------------------------------------------------------
+3.18 Version Check Telemetry Metrics
+--------------------------------------------------------------------------------
+Description: Returns cumulative version check telemetry metrics aggregated per device.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/version-check-metrics
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "metrics": [
+      {
+        "device_id": "ESP32-DEVICE-001",
+        "result": "CURRENT",
+        "total_checks": 48,
+        "last_date": "2026-11-11"
+      }
+    ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.19 View Audit Logs
+--------------------------------------------------------------------------------
+Description: Retrieves immutable security audit trail events.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/audit?page=1&perPage=25
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "logs": [
+      {
+        "id": "aud-001",
+        "username": "admin",
+        "action": "LOGIN",
+        "entity_type": "ADMIN_ACCOUNT",
+        "entity_id": "admin-root-0001",
+        "ip_address": "127.0.0.1",
+        "created_at": "2026-11-11 05:30:00"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "perPage": 25
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.20 Get Settings (Admin & Portal User Metadata)
+--------------------------------------------------------------------------------
+Description: Retrieves primary administrator and portal user metadata for settings view.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/settings
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "admin": {
+      "id": "admin-root-0001",
+      "username": "admin",
+      "role": "SUPER_ADMIN",
+      "lastLogin": "2026-11-11 05:30:00"
+    },
+    "portalUser": {
+      "id": "user-portal-0001",
+      "username": "user",
+      "role": "USER",
+      "updatedAt": "2026-10-20 11:20:00"
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.21 Update Admin Username / Password
+--------------------------------------------------------------------------------
+Description: Updates administrator credentials with bcrypt hashing. Takes effect
+             immediately on subsequent login.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/settings/admin-credentials
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "username": "admin",
+  "password": "NewAdminPassword123"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "username": "admin",
+    "passwordChanged": true
+  },
+  "message": "Admin credentials updated successfully. Use these new credentials for next login."
+}
+
+
+--------------------------------------------------------------------------------
+3.22 Update Portal User Username / Password
+--------------------------------------------------------------------------------
+Description: Updates public portal credentials. Users unlocking the portal must
+             supply this updated password on next login.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/settings/user-credentials
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "username": "user",
+  "password": "NewUserPassword456"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "username": "user",
+    "passwordChanged": true
+  },
+  "message": "User credentials updated successfully. Portal login will now require this new password."
+}
+
+
+--------------------------------------------------------------------------------
+3.23 Admin Logout
+--------------------------------------------------------------------------------
+Description: Terminates administrator session and clears session cookie.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/logout
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+
+================================================================================
+END OF API DOCUMENTATION
+================================================================================

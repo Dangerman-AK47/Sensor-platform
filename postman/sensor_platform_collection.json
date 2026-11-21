@@ -1,0 +1,503 @@
+{
+  "info": {
+    "name": "ESP32 Sensor Platform & Admin API Collection",
+    "_postman_id": "sensor-platform-v1",
+    "description": "Complete API testing collection for ESP32 Sensor Platform: IoT Sensor APIs, Portal Auth, and Admin Dashboard APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://realtimeprojectsolutions.com",
+      "type": "string"
+    },
+    {
+      "key": "sensorToken",
+      "value": "YOUR_SENSOR_BEARER_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "deviceId",
+      "value": "ESP32-DEVICE-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. IoT Sensor APIs",
+      "item": [
+        {
+          "name": "1. Register Sensor (Auto-Approval)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"sensorVersion\": \"1.0.0\",\n  \"firmwareVersion\": \"4.0.0\",\n  \"hardwareModel\": \"ESP32-DevKit-V1\",\n  \"metadata\": {\n    \"location\": \"Testing Lab\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sensors", "register"]
+            },
+            "description": "Registers device. Returns Bearer token immediately."
+          }
+        },
+        {
+          "name": "2. Sensor Heartbeat Ping",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
+              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"sensorVersion\": \"1.1.1\",\n  \"firmwareVersion\": \"4.0.0\",\n  \"hardwareModel\": \"ESP32-DevKit-V1\",\n  \"metadata\": {\n    \"freeHeap\": 184320,\n    \"rssi\": -55,\n    \"uptime\": 3600\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/heartbeat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sensors", "heartbeat"]
+            },
+            "description": "Sends periodic ping and syncs latest sensor_version to admin website."
+          }
+        },
+        {
+          "name": "3. Check Configuration Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
+              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentVersion\": \"1.0.0\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/version-check",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sensors", "version-check"]
+            },
+            "description": "Compares reported version against active configuration on server."
+          }
+        },
+        {
+          "name": "4. Download Active Configuration",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
+              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/configuration/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sensors", "configuration", "download"]
+            },
+            "description": "Downloads the active JSON configuration and records download audit."
+          }
+        },
+        {
+          "name": "5. Upload Telemetry Data File",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
+              { "key": "X-Sensor-ID", "value": "{{deviceId}}" },
+              { "key": "X-Sensor-Version", "value": "1.1.1" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sensors", "upload"]
+            },
+            "description": "Uploads sensor data file (CSV / binary, max 100MB) with SHA-256 validation."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Portal User Authentication",
+      "item": [
+        {
+          "name": "1. Portal User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "login"]
+            },
+            "description": "Default credentials: user / password. Unlocks the public portal."
+          }
+        },
+        {
+          "name": "2. Portal User Session Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/user/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "session"]
+            }
+          }
+        },
+        {
+          "name": "3. Portal User Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/user/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Authentication & Dashboard",
+      "item": [
+        {
+          "name": "1. Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "login"]
+            },
+            "description": "Authenticates admin. Saves cookie session automatically."
+          }
+        },
+        {
+          "name": "2. Admin Session",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "session"]
+            }
+          }
+        },
+        {
+          "name": "3. Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors", "stats"]
+            }
+          }
+        },
+        {
+          "name": "4. List Sensors",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors?search=&status=&page=1&perPage=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "status", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "perPage", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Get Single Sensor Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors", "{{deviceId}}"]
+            }
+          }
+        },
+        {
+          "name": "6. Toggle Sensor Status (ACTIVE / DEACTIVE)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DEACTIVE\",\n  \"reason\": \"Routine lab maintenance\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors", "{{deviceId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "7. Regenerate Sensor Bearer Token",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors", "{{deviceId}}", "token"]
+            }
+          }
+        },
+        {
+          "name": "8. Delete Sensor Device (Cascade Purge)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "sensors", "{{deviceId}}"]
+            }
+          }
+        },
+        {
+          "name": "9. List Configurations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/configuration",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "configuration"]
+            }
+          }
+        },
+        {
+          "name": "10. Upload New Configuration",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "version", "value": "1.2.0", "type": "text" },
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/configuration",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "configuration"]
+            }
+          }
+        },
+        {
+          "name": "11. Activate Configuration",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/configuration/CONFIG_ID/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "configuration", "CONFIG_ID", "activate"]
+            }
+          }
+        },
+        {
+          "name": "12. List Uploaded Files",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/files?search=&page=1&perPage=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "files"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "perPage", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "13. Download Uploaded File",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/files/FILE_ID/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "files", "FILE_ID", "download"]
+            }
+          }
+        },
+        {
+          "name": "14. Delete Uploaded File",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/files/FILE_ID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "files", "FILE_ID"]
+            }
+          }
+        },
+        {
+          "name": "15. Registration History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/history?status=&page=1&perPage=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "history"],
+              "query": [
+                { "key": "status", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "perPage", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "16. Approve Registration Request",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/history/REQUEST_ID/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "history", "REQUEST_ID", "approve"]
+            }
+          }
+        },
+        {
+          "name": "17. Reject Registration Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Device model not authorized\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/history/REQUEST_ID/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "history", "REQUEST_ID", "reject"]
+            }
+          }
+        },
+        {
+          "name": "18. Version Check Telemetry Metrics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/version-check-metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "version-check-metrics"]
+            }
+          }
+        },
+        {
+          "name": "19. Audit Logs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/audit?page=1&perPage=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "audit"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "perPage", "value": "25" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "20. Get Settings (Admin & Portal User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "settings"]
+            }
+          }
+        },
+        {
+          "name": "21. Update Admin Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"newAdminPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings/admin-credentials",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "settings", "admin-credentials"]
+            }
+          }
+        },
+        {
+          "name": "22. Update Portal User Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user\",\n  \"password\": \"newUserPassword456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings/user-credentials",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "settings", "user-credentials"]
+            }
+          }
+        },
+        {
+          "name": "23. Admin Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "logout"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

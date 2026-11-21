@@ -1,0 +1,9 @@
+{
+  "version": "1.1.0",
+  "telemetry_interval_sec": 30,
+  "sampling_rate_hz": 10,
+  "features": {
+    "sleep_mode": false,
+    "high_precision": true
+  }
+}
