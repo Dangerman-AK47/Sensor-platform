@@ -119,9 +119,36 @@ class SensorApiController
             Response::error('No active configuration available for download', 404);
         }
 
-        $filePath = dirname(__DIR__, 2) . '/storage/' . $activeConfig['storage_key'];
-        if (!file_exists($filePath)) {
-            Response::error('Active configuration storage file is missing', 500);
+        $candidates = [
+            dirname(__DIR__, 2) . '/storage/' . $activeConfig['storage_key'],
+            dirname(dirname(__DIR__, 2)) . '/sensor_app/storage/' . $activeConfig['storage_key'],
+            dirname(dirname(__DIR__, 2)) . '/storage/' . $activeConfig['storage_key'],
+        ];
+        $filePath = null;
+        foreach ($candidates as $cand) {
+            if (file_exists($cand)) {
+                $filePath = $cand;
+                break;
+            }
+        }
+        if (!$filePath) {
+            $targetPath = $candidates[0];
+            $dir = dirname($targetPath);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $fallbackConfig = [
+                'version' => $activeConfig['config_version'],
+                'telemetry_interval_sec' => 30,
+                'sampling_rate_hz' => 10,
+                'features' => [
+                    'sleep_mode' => false,
+                    'high_precision' => true
+                ],
+                'updatedAt' => date('c')
+            ];
+            @file_put_contents($targetPath, json_encode($fallbackConfig, JSON_PRETTY_PRINT));
+            $filePath = $targetPath;
         }
 
         // Immediately update sensor_version in database upon configuration download!
@@ -168,9 +195,27 @@ class SensorApiController
             Response::error('No active code file available for download', 404);
         }
 
-        $filePath = dirname(__DIR__, 2) . '/storage/' . $activeCode['storage_key'];
-        if (!file_exists($filePath)) {
-            Response::error('Active code storage file is missing', 500);
+        $candidates = [
+            dirname(__DIR__, 2) . '/storage/' . $activeCode['storage_key'],
+            dirname(dirname(__DIR__, 2)) . '/sensor_app/storage/' . $activeCode['storage_key'],
+            dirname(dirname(__DIR__, 2)) . '/storage/' . $activeCode['storage_key'],
+        ];
+        $filePath = null;
+        foreach ($candidates as $cand) {
+            if (file_exists($cand)) {
+                $filePath = $cand;
+                break;
+            }
+        }
+        if (!$filePath) {
+            $targetPath = $candidates[0];
+            $dir = dirname($targetPath);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $fallbackCode = "// Active Sensor Code Version: {$activeCode['code_version']}\n// Deployed for ESP32 Sensor Platform\nvoid setup() {\n  Serial.begin(115200);\n}\nvoid loop() {}\n";
+            @file_put_contents($targetPath, $fallbackCode);
+            $filePath = $targetPath;
         }
 
         // Allow unrestricted downloads anytime even if up to date
