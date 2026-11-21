@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    # 1. Deploy public web root files to public_html
+    - export DEPLOYPATH=/home/$USER/public_html
+    - /bin/rsync -av --delete-after --exclude='.git*' --exclude='.env' ./dist/hostycare_bundle/public_html/ $DEPLOYPATH/
+    
+    # 2. Deploy backend application modules to sensor_app (outside public_html for security)
+    - export APPPATH=/home/$USER/sensor_app
+    - /bin/rsync -av --exclude='.git*' --exclude='.env' --exclude='storage/uploads/*' --exclude='storage/logs/*' ./dist/hostycare_bundle/sensor_app/ $APPPATH/
