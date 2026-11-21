@@ -12,6 +12,7 @@
 static Preferences       _sensorPrefs;
 static String            _sensorToken = "";
 static String            _configVersion = "0.0.0";
+static String            _codeVersion = "0.0.0";
 static String            _sensorId = DEFAULT_SENSOR_ID;
 static String            _serverUrl = DEFAULT_SERVER_URL;
 
@@ -43,6 +44,7 @@ void platformInit() {
   _sensorPrefs.begin("sensor_store", true); // read-only
   _sensorToken   = _sensorPrefs.getString("token", "");
   _configVersion = _sensorPrefs.getString("cfgVer", "0.0.0");
+  _codeVersion   = _sensorPrefs.getString("codeVer", "0.0.0");
   String savedId = _sensorPrefs.getString("sensorId", DEFAULT_SENSOR_ID);
   String savedUrl= _sensorPrefs.getString("serverUrl", DEFAULT_SERVER_URL);
   _sensorPrefs.end();
@@ -54,6 +56,7 @@ void platformInit() {
   Serial.printf("  Server URL    : %s\n", _serverUrl.c_str());
   Serial.printf("  Sensor ID     : %s\n", _sensorId.c_str());
   Serial.printf("  Config Version: %s\n", _configVersion.c_str());
+  Serial.printf("  Code Version  : %s\n", _codeVersion.c_str());
 
   if (_sensorToken.length() > 0) {
     Serial.printf("  Auth Token    : %s...\n", _sensorToken.substring(0, min(16, (int)_sensorToken.length())).c_str());
@@ -120,6 +123,18 @@ void platformSetConfigVersion(const char* version) {
   Serial.printf("[Platform] Config version updated to '%s'.\n", _configVersion.c_str());
 }
 
+String platformGetCodeVersion() {
+  return _codeVersion;
+}
+
+void platformSetCodeVersion(const char* version) {
+  _codeVersion = version ? version : "0.0.0";
+  _sensorPrefs.begin("sensor_store", false);
+  _sensorPrefs.putString("codeVer", _codeVersion);
+  _sensorPrefs.end();
+  Serial.printf("[Platform] Code version updated to '%s'.\n", _codeVersion.c_str());
+}
+
 void platformStatus() {
   Serial.println("\n============ Platform Status ============");
   Serial.printf("Server Base URL: %s\n", _serverUrl.c_str());
@@ -127,6 +142,7 @@ void platformStatus() {
   Serial.printf("Hardware Model:  %s\n", HARDWARE_MODEL);
   Serial.printf("Firmware Ver:    %s\n", FIRMWARE_VERSION);
   Serial.printf("Config Ver:      %s\n", _configVersion.c_str());
+  Serial.printf("Code Ver:        %s\n", _codeVersion.c_str());
   if (_sensorToken.length() > 0) {
     Serial.printf("Bearer Token:    %s...\n", _sensorToken.substring(0, min(16, (int)_sensorToken.length())).c_str());
     Serial.println("Registration:    REGISTERED (ACTIVE)");
@@ -438,6 +454,172 @@ bool platformDownloadConfig(const char* expectedVersion) {
     Serial.println("[Config] No active configuration deployed on server yet.");
   } else {
     Serial.printf("[Config] Download failed with HTTP %d: %s\n", httpCode, http.getString().c_str());
+  }
+
+  http.end();
+  return false;
+}
+
+bool platformCodeVersionCheck() {
+  if (!wifiIsConnected()) {
+    Serial.println("[Code] Error: Wi-Fi not connected.");
+    return false;
+  }
+  if (_sensorToken.length() == 0) {
+    Serial.println("[Code] Error: Sensor not registered. Registering now...");
+    if (!platformRegister()) return false;
+  }
+
+  Serial.println("\n[Code] Checking sensor code/firmware version on server...");
+  Serial.printf("  Installed Code Version   : %s\n", _codeVersion.c_str());
+
+  HTTPClient http;
+  String url = _serverUrl + "/api/v1/sensors/code/version-check";
+  if (!beginRequest(http, url)) {
+    http.end();
+    return false;
+  }
+
+  http.addHeader("Content-Type",  "application/json");
+  http.addHeader("Authorization", "Bearer " + _sensorToken);
+  http.addHeader("X-Sensor-ID",   _sensorId);
+
+  JsonDocument reqDoc;
+  reqDoc["currentCodeVersion"] = _codeVersion;
+  reqDoc["currentVersion"]     = _codeVersion;
+  reqDoc["deviceId"]           = _sensorId;
+
+  String body;
+  serializeJson(reqDoc, body);
+
+  int httpCode = http.POST(body);
+
+  if (httpCode == 200) {
+    JsonDocument res;
+    deserializeJson(res, http.getString());
+
+    const char* result            = res["result"] | "CURRENT";
+    const char* activeVer         = res["activeVersion"] | res["code_version"];
+    bool        isUpdateAvailable = (String(result) == "UPDATE_AVAILABLE") || res["isUpdateAvailable"];
+
+    Serial.println("---------------------------------------------------------------");
+    Serial.printf("[Code] Status               : %s\n", result);
+    Serial.printf("  Current Device Version    : %s\n", _codeVersion.c_str());
+    Serial.printf("  Active Server Version     : %s\n", activeVer ? activeVer : "None");
+    Serial.printf("  Update Available          : %s\n", isUpdateAvailable ? "YES" : "NO");
+    Serial.println("---------------------------------------------------------------");
+
+    http.end();
+
+    if (isUpdateAvailable) {
+      Serial.printf("[Code] New code version detected (%s -> %s)\n", _codeVersion.c_str(), activeVer ? activeVer : "");
+      Serial.println("[Code] Starting automatic download now...\n");
+      return platformDownloadCode(activeVer);
+    } else {
+      Serial.println("[Code] Sensor code is up to date.");
+      Serial.println("  (Note: You can re-download anytime via 'code download' or 'download code')");
+      return true;
+    }
+  } else if (httpCode == 401) {
+    Serial.println("[Code] Unauthorized (401). Please run 'reregister'.");
+  } else {
+    Serial.printf("[Code] Failed with HTTP %d: %s\n", httpCode, http.getString().c_str());
+  }
+
+  http.end();
+  return false;
+}
+
+bool platformDownloadCode(const char* expectedVersion) {
+  if (!wifiIsConnected()) {
+    Serial.println("[Code] Error: Wi-Fi not connected.");
+    return false;
+  }
+  if (_sensorToken.length() == 0) {
+    Serial.println("[Code] Error: Sensor not registered. Registering now...");
+    if (!platformRegister()) return false;
+  }
+
+  Serial.println("[Code] Downloading active code file from server...");
+
+  HTTPClient http;
+  String url = _serverUrl + "/api/v1/sensors/code/download?deviceId=" + _sensorId;
+  if (!beginRequest(http, url)) {
+    http.end();
+    return false;
+  }
+
+  http.addHeader("Authorization", "Bearer " + _sensorToken);
+  http.addHeader("X-Sensor-ID",   _sensorId);
+
+  const char* capturedHeaders[] = { "X-Code-Version", "Content-Type" };
+  http.collectHeaders(capturedHeaders, 2);
+
+  int httpCode = http.GET();
+  Serial.printf("[Code] Server returned HTTP %d\n", httpCode);
+
+  if (httpCode == 200) {
+    String headerVer = http.header("X-Code-Version");
+    int payloadSize  = http.getSize();
+
+    String newVer = "";
+    if (expectedVersion != nullptr && strlen(expectedVersion) > 0 && String(expectedVersion) != "0.0.0") {
+      newVer = expectedVersion;
+    } else if (headerVer.length() > 0 && headerVer != "0.0.0") {
+      newVer = headerVer;
+    }
+    newVer.trim();
+    if (newVer.length() > 0) {
+      _codeVersion = newVer;
+      _sensorPrefs.begin("sensor_store", false);
+      _sensorPrefs.putString("codeVer", _codeVersion);
+      _sensorPrefs.end();
+      Serial.printf("[Code] >>> Code version updated in NVS: %s <<<\n", _codeVersion.c_str());
+    }
+
+    // Save directly to LittleFS file /sensor_code.bin
+    File file = LittleFS.open("/sensor_code.bin", "w");
+    if (!file) {
+      Serial.println("[Code] Error: Failed to open /sensor_code.bin in LittleFS for writing.");
+      http.end();
+      return false;
+    }
+
+    WiFiClient* stream = http.getStreamPtr();
+    size_t totalBytesWritten = 0;
+    uint8_t buff[512];
+    unsigned long startRead = millis();
+
+    while (http.connected() && (payloadSize < 0 || (int)totalBytesWritten < payloadSize)) {
+      size_t avail = stream ? stream->available() : 0;
+      if (avail > 0) {
+        size_t toRead = avail > sizeof(buff) ? sizeof(buff) : avail;
+        int readBytes = stream->readBytes(buff, toRead);
+        if (readBytes > 0) {
+          file.write(buff, readBytes);
+          totalBytesWritten += readBytes;
+        }
+        startRead = millis();
+      } else {
+        if (millis() - startRead > 4000) break;
+        delay(5);
+      }
+    }
+    file.close();
+
+    Serial.println("---------------------------------------------------------------");
+    Serial.println("[Code] DOWNLOAD COMPLETE!");
+    Serial.printf("  Saved to LittleFS  : /sensor_code.bin\n");
+    Serial.printf("  Total Downloaded   : %u bytes\n", totalBytesWritten);
+    Serial.printf("  Active Code Version: %s\n", _codeVersion.c_str());
+    Serial.println("---------------------------------------------------------------");
+
+    http.end();
+    return true;
+  } else if (httpCode == 404) {
+    Serial.println("[Code] No active code file deployed on server yet.");
+  } else {
+    Serial.printf("[Code] Download failed with HTTP %d: %s\n", httpCode, http.getString().c_str());
   }
 
   http.end();

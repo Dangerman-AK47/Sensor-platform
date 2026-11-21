@@ -107,18 +107,33 @@ class AuditService
             $db = Database::getConnection();
             $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
-            $stmt = $db->prepare('
-                INSERT INTO fv_sensor_config_download_events
-                (id, config_id, device_id, config_version, ip_address, downloaded_at)
-                VALUES (:id, :cfg, :dev, :ver, :ip, NOW())
-            ');
-            $stmt->execute([
-                'id' => bin2hex(random_bytes(16)),
-                'cfg' => $configId,
-                'dev' => $deviceId,
-                'ver' => $version,
-                'ip' => $ip
-            ]);
+            try {
+                $stmt = $db->prepare('
+                    INSERT INTO fv_sensor_config_download_audits
+                    (id, config_id, device_id, downloaded_version, ip_address, downloaded_at)
+                    VALUES (:id, :cfg, :dev, :ver, :ip, NOW())
+                ');
+                $stmt->execute([
+                    'id' => bin2hex(random_bytes(16)),
+                    'cfg' => $configId,
+                    'dev' => $deviceId,
+                    'ver' => $version,
+                    'ip' => $ip
+                ]);
+            } catch (\Throwable $e) {
+                $stmt = $db->prepare('
+                    INSERT INTO fv_sensor_config_download_events
+                    (id, config_id, device_id, config_version, ip_address, downloaded_at)
+                    VALUES (:id, :cfg, :dev, :ver, :ip, NOW())
+                ');
+                $stmt->execute([
+                    'id' => bin2hex(random_bytes(16)),
+                    'cfg' => $configId,
+                    'dev' => $deviceId,
+                    'ver' => $version,
+                    'ip' => $ip
+                ]);
+            }
         } catch (\Exception $e) {
             error_log("Failed to log config download event: " . $e->getMessage());
         }

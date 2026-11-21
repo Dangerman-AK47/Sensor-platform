@@ -7,14 +7,26 @@
 --   $2y$12$L7R2Q5R5u6d2KkQW9f9u0O7o4C4c4A4A4A4A4A4A4A4A4A4A4A4A4 -> generated via standard bcrypt cost 12
 -- =====================================================================
 
--- 1. Default Admin Account (password: admin123)
--- Using a standard PHP password_hash('admin123', PASSWORD_BCRYPT, ['cost' => 12])
+-- 1. Default Admin Account (password: password)
 INSERT INTO `fv_admin_accounts` (`id`, `username`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`, `last_login_at`)
 VALUES (
     'admin-root-0001',
     'admin',
-    '$2y$12$ZqCkW90w6N3D5tP9g8B1OeF8yZ6cI2jL4mK7oP3rQ5tU7wX9yZ1a2',
+    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     'SUPER_ADMIN',
+    1,
+    NOW(),
+    NOW(),
+    NOW()
+) ON DUPLICATE KEY UPDATE `username` = VALUES(`username`);
+
+-- 1b. Default Portal User (Username: user, Password: password)
+INSERT INTO `fv_portal_users` (`id`, `username`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`, `last_login_at`)
+VALUES (
+    'user-portal-0001',
+    'user',
+    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    'USER',
     1,
     NOW(),
     NOW(),

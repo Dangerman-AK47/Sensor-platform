@@ -17,12 +17,16 @@ String platformGetToken();
 void   platformSetToken(const char* token);
 String platformGetConfigVersion();
 void   platformSetConfigVersion(const char* version);
+String platformGetCodeVersion();
+void   platformSetCodeVersion(const char* version);
 
 // Platform Operations
 bool platformRegister();
 bool platformHeartbeat();
 bool platformVersionCheck();
 bool platformDownloadConfig(const char* expectedVersion = nullptr);
+bool platformCodeVersionCheck();
+bool platformDownloadCode(const char* expectedVersion = nullptr);
 bool platformUploadFile(const char* localFsPath = nullptr);
 bool platformReRegister();
 

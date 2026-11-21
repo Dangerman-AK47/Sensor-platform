@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\AuthService;
 use App\Services\DeviceService;
 use App\Services\ConfigService;
+use App\Services\CodeFileService;
 use App\Services\StorageService;
 use App\Services\AuditService;
 use App\Services\SettingsService;
@@ -53,7 +54,7 @@ class AdminApiController
             AuditService::log($admin['id'], 'LOGOUT', 'ADMIN_ACCOUNT', $admin['id']);
         }
         AuthService::logout();
-        Response::success(null, 'Logged out successfully');
+        Response::success(['redirect' => '/'], 'Logged out successfully');
     }
 
     public static function session(): void
@@ -171,6 +172,89 @@ class AdminApiController
         } catch (Exception $e) {
             Response::error($e->getMessage(), 400);
         }
+    }
+
+    // =========================================================
+    // CODE FILE MANAGEMENT
+    // =========================================================
+    public static function listCodeFiles(): void
+    {
+        self::requireAdmin();
+        $codeFiles = CodeFileService::listCodeFiles();
+        Response::success(['codeFiles' => $codeFiles]);
+    }
+
+    public static function uploadCodeFile(): void
+    {
+        $admin = self::requireAdmin();
+        $version = trim($_POST['version'] ?? '');
+
+        if (empty($version)) {
+            Response::error('Code version string is required', 400);
+        }
+
+        if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            Response::error('Code file upload missing or invalid', 400);
+        }
+
+        try {
+            $result = CodeFileService::uploadCodeFile($version, $_FILES['file'], $admin['id']);
+            Response::success($result, 'Code file uploaded successfully', 201);
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 400);
+        }
+    }
+
+    public static function activateCodeFile(): void
+    {
+        $admin = self::requireAdmin();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id = trim((string)($input['id'] ?? ''));
+
+        if (empty($id)) {
+            Response::error('Code file ID is required', 400);
+        }
+
+        try {
+            $result = CodeFileService::activateCodeFile($id, $admin['id']);
+            Response::success($result, "Code file version {$result['version']} activated successfully");
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 400);
+        }
+    }
+
+    public static function deleteCodeFile(): void
+    {
+        $admin = self::requireAdmin();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id = trim((string)($input['id'] ?? ''));
+
+        if (empty($id)) {
+            Response::error('Code file ID is required', 400);
+        }
+
+        try {
+            CodeFileService::deleteCodeFile($id, $admin['id']);
+            Response::success(null, 'Code file deleted successfully');
+        } catch (Exception $e) {
+            Response::error($e->getMessage(), 400);
+        }
+    }
+
+    public static function downloadCodeFile(string $id): void
+    {
+        self::requireAdmin();
+        $code = CodeFileService::getCodeFileById($id);
+        if (!$code) {
+            Response::error('Code file not found', 404);
+        }
+
+        $filePath = dirname(__DIR__, 2) . '/storage/' . $code['storage_key'];
+        if (!file_exists($filePath)) {
+            Response::error('Storage file is missing on server', 500);
+        }
+
+        Response::file($filePath, $code['original_file_name'], $code['mime_type']);
     }
 
     public static function listFiles(): void

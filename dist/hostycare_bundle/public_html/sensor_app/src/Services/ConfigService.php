@@ -190,9 +190,10 @@ class ConfigService
 
         return [
             'result' => $result,
+            'isUpdateAvailable' => ($result === 'UPDATE_AVAILABLE'),
             'activeVersion' => $activeVersion,
             'reportedVersion' => $reportedVersion,
-            'downloadUrl' => $result === 'UPDATE_AVAILABLE' ? '/api/v1/sensors/configuration/download?deviceId=' . urlencode($deviceId) : null
+            'downloadUrl' => '/api/v1/sensors/configuration/download?deviceId=' . urlencode($deviceId)
         ];
     }
 

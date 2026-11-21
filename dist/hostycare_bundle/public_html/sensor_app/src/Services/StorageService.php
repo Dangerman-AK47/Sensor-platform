@@ -101,13 +101,16 @@ class StorageService
             // 3. Fallback database blob if configured
             if (Config::get('UPLOAD_STORAGE_PROVIDER') === 'database') {
                 $blobStmt = $db->prepare('
-                    INSERT INTO fv_storage_blobs (storage_key, data, byte_size, created_at)
-                    VALUES (:key, :data, :size, NOW())
+                    INSERT INTO fv_storage_blobs (id, blob_key, mime_type, byte_size, blob_data, checksum, created_at)
+                    VALUES (:id, :key, :mime, :size, :data, :chk, NOW())
                 ');
                 $blobStmt->execute([
+                    'id' => bin2hex(random_bytes(16)),
                     'key' => $storageKey,
+                    'mime' => $fileInfo['mimeType'] ?? 'application/octet-stream',
+                    'size' => $fileSize,
                     'data' => file_get_contents($fullPath),
-                    'size' => $fileSize
+                    'chk' => $checksum
                 ]);
             }
 

@@ -525,25 +525,64 @@ class DeviceService
             $deviceId = $device['device_id'];
             $devPk = $device['id'];
 
-            // Delete associated file records from DB
-            $delFiles = $db->prepare('DELETE FROM fv_uploaded_file_records WHERE device_id = :device_id');
-            $delFiles->execute(['device_id' => $deviceId]);
+            // 1. Delete associated uploaded files from disk & DB
+            try {
+                $filesStmt = $db->prepare('SELECT storage_key FROM fv_uploaded_file_records WHERE registered_device_id = :pk OR device_id = :did');
+                $filesStmt->execute(['pk' => $devPk, 'did' => $deviceId]);
+                $files = $filesStmt->fetchAll();
+                foreach ($files as $f) {
+                    if (!empty($f['storage_key'])) {
+                        StorageService::deleteFile($f['storage_key']);
+                    }
+                }
+                $delFiles = $db->prepare('DELETE FROM fv_uploaded_file_records WHERE registered_device_id = :pk OR device_id = :did');
+                $delFiles->execute(['pk' => $devPk, 'did' => $deviceId]);
+            } catch (\Throwable $e) {
+                error_log("deleteDevice warning (uploaded files): " . $e->getMessage());
+            }
 
-            // Delete daily metrics
-            $delMetrics = $db->prepare('DELETE FROM fv_sensor_daily_metrics WHERE device_id = :device_id');
-            $delMetrics->execute(['device_id' => $deviceId]);
+            // 2. Delete config download audits
+            try {
+                $delDl = $db->prepare('DELETE FROM fv_sensor_config_download_audits WHERE device_id = :did');
+                $delDl->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {
+                try {
+                    $delDl2 = $db->prepare('DELETE FROM fv_sensor_config_download_events WHERE device_id = :did');
+                    $delDl2->execute(['did' => $deviceId]);
+                } catch (\Throwable $e2) {}
+            }
 
-            // Delete status events
-            $delEvents = $db->prepare('DELETE FROM fv_device_status_events WHERE device_id = :device_id');
-            $delEvents->execute(['device_id' => $deviceId]);
+            // 3. Delete version check events
+            try {
+                $delEv = $db->prepare('DELETE FROM fv_sensor_version_check_events WHERE device_id = :did');
+                $delEv->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {}
 
-            // Delete registration requests
-            $delRequests = $db->prepare('DELETE FROM fv_device_registration_requests WHERE device_id = :device_id');
-            $delRequests->execute(['device_id' => $deviceId]);
+            // 4. Delete daily metrics
+            try {
+                $delMetrics = $db->prepare('DELETE FROM fv_daily_sensor_version_check_metrics WHERE device_id = :did');
+                $delMetrics->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {}
+            try {
+                $delMetrics2 = $db->prepare('DELETE FROM fv_daily_sensor_version_metrics WHERE device_id = :did');
+                $delMetrics2->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {}
 
-            // Delete device itself
-            $delDev = $db->prepare('DELETE FROM fv_registered_devices WHERE id = :id');
-            $delDev->execute(['id' => $devPk]);
+            // 5. Delete device status events
+            try {
+                $delEvents = $db->prepare('DELETE FROM fv_device_status_events WHERE device_id = :did');
+                $delEvents->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {}
+
+            // 6. Delete registration requests
+            try {
+                $delRequests = $db->prepare('DELETE FROM fv_device_registration_requests WHERE device_id = :did');
+                $delRequests->execute(['did' => $deviceId]);
+            } catch (\Throwable $e) {}
+
+            // 7. Delete device itself
+            $delDev = $db->prepare('DELETE FROM fv_registered_devices WHERE id = :pk OR device_id = :did');
+            $delDev->execute(['pk' => $devPk, 'did' => $deviceId]);
 
             $db->commit();
 

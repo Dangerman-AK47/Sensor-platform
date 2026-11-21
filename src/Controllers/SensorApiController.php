@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Services\AuthService;
 use App\Services\DeviceService;
 use App\Services\ConfigService;
+use App\Services\CodeFileService;
 use App\Services\StorageService;
 use App\Services\AuditService;
 use App\Utils\Response;
@@ -156,5 +157,37 @@ class SensorApiController
         } catch (Exception $e) {
             Response::error($e->getMessage(), 400);
         }
+    }
+
+    public static function downloadCodeFile(): void
+    {
+        $device = self::requireSensorAuth();
+        $activeCode = CodeFileService::getActiveCodeFile();
+
+        if (!$activeCode) {
+            Response::error('No active code file available for download', 404);
+        }
+
+        $filePath = dirname(__DIR__, 2) . '/storage/' . $activeCode['storage_key'];
+        if (!file_exists($filePath)) {
+            Response::error('Active code storage file is missing', 500);
+        }
+
+        // Allow unrestricted downloads anytime even if up to date
+        header("X-Code-Version: {$activeCode['code_version']}");
+        header("Access-Control-Expose-Headers: X-Code-Version");
+
+        Response::file($filePath, $activeCode['original_file_name'], $activeCode['mime_type']);
+    }
+
+    public static function codeVersionCheck(): void
+    {
+        $device = self::requireSensorAuth();
+        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+
+        $reported = trim((string)($input['currentVersion'] ?? $input['currentCodeVersion'] ?? ''));
+        $result = CodeFileService::checkCodeVersion($device['device_id'], $reported ?: '0.0.0');
+
+        Response::json($result);
     }
 }

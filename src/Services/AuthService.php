@@ -243,11 +243,11 @@ class AuthService
     }
 
     /**
-     * Generates a 32-byte CSPRNG token (64 hex characters) and bcrypt hash.
+     * Generates a 16-byte CSPRNG token (exactly 32 hex characters) and bcrypt hash.
      */
     public static function generateSensorToken(): array
     {
-        $rawToken = bin2hex(random_bytes(32));
+        $rawToken = bin2hex(random_bytes(16)); // Exactly 32 hex characters
         $tokenHash = password_hash($rawToken, PASSWORD_BCRYPT, ['cost' => 12]);
         return [
             'rawToken' => $rawToken,

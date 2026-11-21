@@ -109,6 +109,25 @@ CREATE TABLE `fv_global_sensor_configurations` (
     CONSTRAINT `fk_configs_activator` FOREIGN KEY (`activated_by_admin_id`) REFERENCES `fv_admin_accounts` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 4b. Global Sensor Code Files
+CREATE TABLE IF NOT EXISTS `fv_global_sensor_code_files` (
+    `id` VARCHAR(36) NOT NULL,
+    `code_version` VARCHAR(50) NOT NULL,
+    `status` ENUM('INACTIVE', 'ACTIVE', 'ARCHIVED') NOT NULL DEFAULT 'INACTIVE',
+    `original_file_name` VARCHAR(255) NOT NULL,
+    `storage_key` VARCHAR(500) NOT NULL,
+    `mime_type` VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream',
+    `file_size_bytes` BIGINT NOT NULL DEFAULT 0,
+    `checksum` VARCHAR(64) NULL,
+    `uploaded_by_admin_id` VARCHAR(36) NULL,
+    `activated_by_admin_id` VARCHAR(36) NULL,
+    `activated_at` DATETIME NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_code_version` (`code_version`),
+    KEY `idx_code_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 5. Uploaded File Records
 CREATE TABLE `fv_uploaded_file_records` (
     `id` VARCHAR(36) NOT NULL,

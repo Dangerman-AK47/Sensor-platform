@@ -194,6 +194,12 @@ if ($path === '/api/v1/sensors/version-check' && $method === 'POST') {
 if ($path === '/api/v1/sensors/configuration/download' && $method === 'GET') {
     SensorApiController::downloadConfiguration();
 }
+if ($path === '/api/v1/sensors/code/version-check' && $method === 'POST') {
+    SensorApiController::codeVersionCheck();
+}
+if (($path === '/api/v1/sensors/code/download' || $path === '/api/v1/sensors/code-file/download') && $method === 'GET') {
+    SensorApiController::downloadCodeFile();
+}
 if ($path === '/api/v1/sensors/upload' && $method === 'POST') {
     SensorApiController::upload();
 }
@@ -237,6 +243,18 @@ if ($path === '/api/admin/configuration' && $method === 'POST') {
 }
 if (preg_match('#^/api/admin/configuration/([a-zA-Z0-9_\-]+)/activate$#', $path, $matches) && $method === 'POST') {
     AdminApiController::activateConfiguration($matches[1]);
+}
+if ($path === '/api/admin/code-files' && $method === 'GET') {
+    AdminApiController::listCodeFiles();
+}
+if ($path === '/api/admin/code-files/upload' && $method === 'POST') {
+    AdminApiController::uploadCodeFile();
+}
+if ($path === '/api/admin/code-files/activate' && $method === 'POST') {
+    AdminApiController::activateCodeFile();
+}
+if ($path === '/api/admin/code-files/delete' && $method === 'POST') {
+    AdminApiController::deleteCodeFile();
 }
 if ($path === '/api/admin/files' && $method === 'GET') {
     AdminApiController::listFiles();
@@ -315,6 +333,17 @@ if (preg_match('#^/admin/sensors/([a-zA-Z0-9_\-]+)$#', $path, $matches) && $meth
 }
 if ($path === '/admin/configs' && $method === 'GET') {
     AdminViewController::configs();
+}
+if ($path === '/admin/code-files' && $method === 'GET') {
+    AdminViewController::codeFiles();
+}
+if (preg_match('#^/admin/code-files/download/([a-zA-Z0-9_\-]+)$#', $path, $matches) && $method === 'GET') {
+    AdminApiController::downloadCodeFile($matches[1]);
+}
+if ($path === '/admin/logout') {
+    \App\Services\AuthService::logout();
+    header('Location: /');
+    exit;
 }
 if ($path === '/admin/history' && $method === 'GET') {
     AdminViewController::history();

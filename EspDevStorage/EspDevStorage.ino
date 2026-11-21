@@ -33,6 +33,7 @@ void printMenu() {
   Serial.printf ("  Server URL   : %s\n", platformGetServerUrl().c_str());
   Serial.printf ("  Device ID    : %s\n", platformGetSensorId().c_str());
   Serial.printf ("  Config Ver   : %s\n", platformGetConfigVersion().c_str());
+  Serial.printf ("  Code Ver     : %s\n", platformGetCodeVersion().c_str());
   Serial.printf ("  Bearer Token : %s\n", platformIsRegistered() 
                  ? (platformGetToken().substring(0, min(12, (int)platformGetToken().length())) + "...").c_str() 
                  : "NOT REGISTERED");
@@ -41,10 +42,11 @@ void printMenu() {
   Serial.println("QUICK ACTIONS (Type number & press Enter):");
   Serial.println("  [1] Send Heartbeat / Ping      (Syncs version & status to website)");
   Serial.println("  [2] Upload Telemetry File      (Uploads to /api/v1/sensors/upload)");
-  Serial.println("  [3] Check Configuration Update (Auto-downloads if newer version)");
-  Serial.println("  [4] Re-Register Sensor         (Clears token & registers freshly)");
-  Serial.println("  [5] Scan & Connect Wi-Fi       (Interactive network wizard)");
-  Serial.println("  [6] Flash Storage Info & Files (LittleFS df & ls)");
+  Serial.println("  [3] Check Configuration Update (Downloads active config file)");
+  Serial.println("  [4] Check / Download Code File (Downloads active sensor code file)");
+  Serial.println("  [5] Re-Register Sensor         (Clears token & registers freshly)");
+  Serial.println("  [6] Scan & Connect Wi-Fi       (Interactive network wizard)");
+  Serial.println("  [7] Flash Storage Info & Files (LittleFS df & ls)");
   Serial.println("  [M] Re-display this menu");
   Serial.println("  [H] Display full CLI command reference");
   Serial.println("---------------------------------------------------------------");
@@ -65,7 +67,9 @@ void printHelp() {
   Serial.println("  register                  Register device at server platform");
   Serial.println("  heartbeat | ping          Send heartbeat & sync version to dashboard");
   Serial.println("  version                   Check config version on server");
-  Serial.println("  download [version]        Download active configuration file");
+  Serial.println("  download [config|code]    Download active config or code file");
+  Serial.println("  code check                Check sensor code version on server");
+  Serial.println("  code download             Download active sensor code file");
   Serial.println("  upload [local_path]       Upload telemetry file (or sample data)");
   Serial.println("  reregister                Clear token and register freshly");
   Serial.println("  status                    Display platform & registration status");
@@ -211,10 +215,14 @@ void parseCommand(String cmd) {
     return;
   }
   if (cmd == "4") {
-    platformReRegister();
+    platformCodeVersionCheck();
     return;
   }
   if (cmd == "5") {
+    platformReRegister();
+    return;
+  }
+  if (cmd == "6") {
     int found = wifiScan();
     if (found > 0) {
       Serial.println("Enter network number to connect (or 'cancel'):");
@@ -225,7 +233,7 @@ void parseCommand(String cmd) {
     }
     return;
   }
-  if (cmd == "6") {
+  if (cmd == "7") {
     fsInfo();
     fsList("/");
     return;
@@ -330,7 +338,22 @@ void parseCommand(String cmd) {
     platformVersionCheck();
   }
   else if (action.equalsIgnoreCase("download")) {
-    platformDownloadConfig(args.length() > 0 ? args.c_str() : nullptr);
+    if (args.equalsIgnoreCase("code")) {
+      platformDownloadCode();
+    } else if (args.equalsIgnoreCase("config")) {
+      platformDownloadConfig();
+    } else {
+      platformDownloadConfig(args.length() > 0 ? args.c_str() : nullptr);
+    }
+  }
+  else if (action.equalsIgnoreCase("code")) {
+    if (args.equalsIgnoreCase("download")) {
+      platformDownloadCode();
+    } else if (args.equalsIgnoreCase("check") || args.equalsIgnoreCase("version")) {
+      platformCodeVersionCheck();
+    } else {
+      Serial.println("Usage: code check | code download");
+    }
   }
   else if (action.equalsIgnoreCase("upload")) {
     platformUploadFile(args.length() > 0 ? args.c_str() : nullptr);

@@ -98,6 +98,21 @@ class AdminViewController
         ]);
     }
 
+    public static function codeFiles(): void
+    {
+        $admin = self::requireAuth();
+        $codeFiles = \App\Services\CodeFileService::listCodeFiles();
+        $activeCode = \App\Services\CodeFileService::getActiveCodeFile();
+
+        View::render('admin.code-files', [
+            'title' => 'Code Files',
+            'admin' => $admin,
+            'activeNav' => 'code_files',
+            'codeFiles' => $codeFiles,
+            'activeCode' => $activeCode
+        ]);
+    }
+
     public static function history(): void
     {
         $admin = self::requireAuth();

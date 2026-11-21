@@ -52,10 +52,10 @@ The firmware automatically senses the target processor board at compile time:
    - If not found or failed: Automatically triggers the **Interactive Wi-Fi Scanner**, displays available SSIDs in a formatted ASCII table, and prompts you in the Serial Monitor for network selection and password.
 3. **Step 2 — Website Platform Registration & Synchronization**:
    - Once Wi-Fi connects, checks NVS (`sensor_store`) for a registered Bearer token.
-   - **If not registered**: Automatically sends POST `/api/v1/sensors/register`, captures the 64-character bearer token, and saves it in flash NVS.
+   - **If not registered**: Automatically sends POST `/api/v1/sensors/register`, captures the 32-character bearer token, and saves it in flash NVS.
    - **If registered**: Automatically fires a POST `/api/v1/sensors/heartbeat` ping containing RSSI, heap, uptime, and installed configuration version so the web dashboard turns **Active** with the right version.
 4. **Step 3 — Interactive CLI**:
-   - Prints the main control menu and waits for quick single-digit numbers (`1`–`6`) or typed commands.
+   - Prints the main control menu and waits for quick single-digit numbers (`1`–`7`) or typed commands.
 
 ---
 
@@ -86,9 +86,10 @@ Install via **Arduino IDE Library Manager** (`Ctrl+Shift+I`):
 * `1` — **Send Heartbeat / Ping**: Synchronizes telemetry and config version with the dashboard.
 * `2` — **Upload Telemetry File**: Transmits a CSV file to the FileVault storage portal (`/api/v1/sensors/upload`).
 * `3` — **Check Configuration Update**: Queries `/api/v1/sensors/version-check`, downloads new config into LittleFS `/config.json`, and updates dashboard.
-* `4` — **Re-Register Sensor**: Clears saved token from NVS and registers freshly.
-* `5` — **Scan & Connect Wi-Fi**: Launches the interactive network scanner.
-* `6` — **Flash Storage Info**: Runs `df` and `ls` on LittleFS.
+* `4` — **Check / Download Code File**: Queries `/api/v1/sensors/code/version-check`, downloads active code file into LittleFS `/sensor_code.bin`.
+* `5` — **Re-Register Sensor**: Clears saved token from NVS and registers freshly.
+* `6` — **Scan & Connect Wi-Fi**: Launches the interactive network scanner.
+* `7` — **Flash Storage Info**: Runs `df` and `ls` on LittleFS.
 * `M` — **Menu**: Re-prints the main quick status menu.
 * `H` — **Help**: Displays the full command list.
 
@@ -104,10 +105,12 @@ Install via **Arduino IDE Library Manager** (`Ctrl+Shift+I`):
 * `wifi disconnect` — Disconnect from active Wi-Fi
 
 #### Sensor Platform & Cloud Commands
-* `register` — Register device at `https://realtimeprojectsolutions.com`
+* `register` — Register device at `https://realtimeprojectsolutions.com` (acquires 32-char token)
 * `heartbeat` or `ping` — Send live telemetry ping
 * `version` — Check configuration version on server
-* `download [version]` — Force download of active server configuration
+* `download [config|code]` — Download active configuration or code file (multiple downloads allowed anytime)
+* `code check` — Check sensor code/firmware version on server
+* `code download` — Force download of active code file into LittleFS
 * `upload [path]` — Upload a file from LittleFS (or sample telemetry data)
 * `reregister` — Clear bearer token and register freshly
 * `status` — Show complete platform, registration, token, and Wi-Fi status

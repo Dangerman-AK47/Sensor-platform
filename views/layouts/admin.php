@@ -43,6 +43,10 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
                     <span>Configuration Settings</span>
                 </a>
+                <a href="/admin/code-files" class="nav-item <?= ($activeNav ?? '') === 'code_files' ? 'active' : '' ?>">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    <span>Code Files</span>
+                </a>
                 <a href="/admin/history" class="nav-item <?= ($activeNav ?? '') === 'history' ? 'active' : '' ?>">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
                     <span>Registration History</span>
@@ -70,7 +74,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                <form action="/api/admin/logout" method="POST" onsubmit="event.preventDefault(); fetch('/api/admin/logout', {method:'POST'}).then(() => window.location.href='/admin/login');">
+                <form action="/api/admin/logout" method="POST" onsubmit="event.preventDefault(); fetch('/api/admin/logout', {method:'POST'}).then(() => window.location.href='/');">
                     <button type="submit" class="btn btn-ghost" style="width: 100%; justify-content: flex-start; color: var(--slate-300);">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                         <span>Sign Out</span>
@@ -104,7 +108,7 @@
                     </div>
 
                     <!-- Quick Logout -->
-                    <button onclick="fetch('/api/admin/logout', {method:'POST'}).then(() => window.location.href='/admin/login');" class="btn btn-secondary btn-sm" title="Logout">
+                    <button onclick="fetch('/api/admin/logout', {method:'POST'}).then(() => window.location.href='/');" class="btn btn-secondary btn-sm" title="Logout">
                         Logout
                     </button>
                 </div>
@@ -132,7 +136,7 @@
                     <strong>Important:</strong> This raw Bearer token is shown <strong>ONLY ONCE</strong> and cannot be retrieved later. Copy it now and flash it into your ESP32 device!
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Raw Token (CSPRNG 256-bit):</label>
+                    <label class="form-label">Raw Bearer Token (32-character Hex):</label>
                     <div style="display: flex; gap: 8px;">
                         <input id="modal-token-input" type="text" readonly class="input font-mono" style="font-size: 12px;">
                         <button data-copy-target="modal-token-input" class="btn btn-primary btn-sm">Copy</button>

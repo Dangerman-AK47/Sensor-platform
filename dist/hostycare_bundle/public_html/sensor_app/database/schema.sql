@@ -34,6 +34,20 @@ CREATE TABLE `fv_admin_accounts` (
     UNIQUE KEY `uk_admin_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 1b. Portal Users
+CREATE TABLE `fv_portal_users` (
+    `id` VARCHAR(36) NOT NULL,
+    `username` VARCHAR(50) NOT NULL,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `role` VARCHAR(20) NOT NULL DEFAULT 'USER',
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `last_login_at` DATETIME NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_portal_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 2. Registered Devices
 CREATE TABLE `fv_registered_devices` (
     `id` VARCHAR(36) NOT NULL,
@@ -93,6 +107,25 @@ CREATE TABLE `fv_global_sensor_configurations` (
     KEY `idx_configs_status` (`status`),
     CONSTRAINT `fk_configs_uploader` FOREIGN KEY (`uploaded_by_admin_id`) REFERENCES `fv_admin_accounts` (`id`) ON DELETE SET NULL,
     CONSTRAINT `fk_configs_activator` FOREIGN KEY (`activated_by_admin_id`) REFERENCES `fv_admin_accounts` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4b. Global Sensor Code Files
+CREATE TABLE IF NOT EXISTS `fv_global_sensor_code_files` (
+    `id` VARCHAR(36) NOT NULL,
+    `code_version` VARCHAR(50) NOT NULL,
+    `status` ENUM('INACTIVE', 'ACTIVE', 'ARCHIVED') NOT NULL DEFAULT 'INACTIVE',
+    `original_file_name` VARCHAR(255) NOT NULL,
+    `storage_key` VARCHAR(500) NOT NULL,
+    `mime_type` VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream',
+    `file_size_bytes` BIGINT NOT NULL DEFAULT 0,
+    `checksum` VARCHAR(64) NULL,
+    `uploaded_by_admin_id` VARCHAR(36) NULL,
+    `activated_by_admin_id` VARCHAR(36) NULL,
+    `activated_at` DATETIME NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_code_version` (`code_version`),
+    KEY `idx_code_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Uploaded File Records
