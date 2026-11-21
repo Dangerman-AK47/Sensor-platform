@@ -14,6 +14,14 @@ jobs:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
 
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📦 Build Production Bundle
+        run: node scripts/build-production-bundle.js
+
       # Deploy full platform (frontend + sensor_app backend) to public_html
       - name: 🌐 Sync Platform to Hostycare public_html
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

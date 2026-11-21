@@ -99,6 +99,9 @@ const adaptedIndex = indexPhpSource.replace(
 );
 fs.writeFileSync(path.join(webDir, 'index.php'), adaptedIndex);
 
+console.log('2b. Syncing sensor_app into public_html/sensor_app for unified deployment...');
+copyDir(appDir, path.join(webDir, 'sensor_app'));
+
 // Add quick diagnostic health-check page in public_html for cPanel testing
 const healthCheckScript = `<?php
 header('Content-Type: application/json');
