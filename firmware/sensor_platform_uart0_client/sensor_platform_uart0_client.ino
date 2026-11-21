@@ -55,6 +55,7 @@ Preferences sensorPrefs;
 
 String sensorToken          = "";
 String currentConfigVersion = "0.0.0";
+String currentCodeVersion   = "0.0.0";
 
 // Reusable network clients
 WiFiClientSecure secureClient;
@@ -101,6 +102,7 @@ void loadSensorPrefs() {
   sensorPrefs.begin("sensor", true);
   sensorToken          = sensorPrefs.getString("token",      "");
   currentConfigVersion = sensorPrefs.getString("cfgVersion", "0.0.0");
+  currentCodeVersion   = sensorPrefs.getString("codeVersion", "0.0.0");
   String savedId       = sensorPrefs.getString("sensorId",   "");
   sensorPrefs.end();
 
@@ -112,17 +114,20 @@ void loadSensorPrefs() {
     sprintln("[Prefs] Clearing old token. Automatic re-registration will trigger...");
     sensorToken          = "";
     currentConfigVersion = "0.0.0";
+    currentCodeVersion   = "0.0.0";
   } else if (sensorToken.length() > 0) {
     sprintln("[Prefs] Token loaded for: " + savedId);
     sprintln("[Prefs] Config version  : " + currentConfigVersion);
+    sprintln("[Prefs] Code version    : " + currentCodeVersion);
   }
 }
 
 void saveSensorPrefs() {
   sensorPrefs.begin("sensor", false);
-  sensorPrefs.putString("token",      sensorToken);
-  sensorPrefs.putString("sensorId",   String(SENSOR_ID));
-  sensorPrefs.putString("cfgVersion", currentConfigVersion);
+  sensorPrefs.putString("token",       sensorToken);
+  sensorPrefs.putString("sensorId",    String(SENSOR_ID));
+  sensorPrefs.putString("cfgVersion",  currentConfigVersion);
+  sensorPrefs.putString("codeVersion", currentCodeVersion);
   sensorPrefs.end();
 }
 
@@ -760,10 +765,12 @@ void checkVersion() {
       downloadConfig(targetVer);
     } else {
       sprintln("[Version] Sensor configuration is already up to date.");
+      sprintln("[Version] Downloading anyway to verify repeat download capability...\n");
+      downloadConfig(activeVersion ? String(activeVersion) : "");
     }
 
   } else if (httpCode == 401) {
-    sprintln("[Version] Unauthorized (401). Use option [4] to re-register.");
+    sprintln("[Version] Unauthorized (401). Use option [5] to re-register.");
     http.end();
   } else if (httpCode < 0) {
     sprintln("[Version] Connection error: " + String(http.errorToString(httpCode).c_str()));
@@ -775,13 +782,162 @@ void checkVersion() {
 }
 
 // ============================================================
-// OPTION 4 — RE-REGISTER
+// OPTION 4 — CHECK CODE FILE VERSION + DOWNLOAD
+// POST /api/v1/sensors/code/version-check & GET /api/v1/sensors/code/download
+// ============================================================
+void downloadCode(String expectedVersion = "") {
+  sprintln("[Code] Downloading active code file from server...");
+
+  HTTPClient http;
+  if (!beginRequest(http, String(SERVER_BASE_URL) + "/api/v1/sensors/code/download?deviceId=" + String(SENSOR_ID))) {
+    http.end();
+    return;
+  }
+
+  http.addHeader("Authorization", "Bearer " + sensorToken);
+  http.addHeader("X-Sensor-ID",   SENSOR_ID);
+
+  const char* capturedHeaders[] = { "X-Code-Version", "Content-Type" };
+  http.collectHeaders(capturedHeaders, 2);
+
+  int httpCode = http.GET();
+  sprintln("[Code] HTTP Status: " + String(httpCode));
+
+  if (httpCode == 200) {
+    String headerVer = http.header("X-Code-Version");
+    int payloadSize  = http.getSize();
+
+    String newVersion = "";
+    if (expectedVersion.length() > 0 && expectedVersion != "0.0.0") {
+      newVersion = expectedVersion;
+    } else if (headerVer.length() > 0) {
+      newVersion = headerVer;
+    }
+
+    newVersion.trim();
+    if (newVersion.length() > 0) {
+      currentCodeVersion = newVersion;
+      saveSensorPrefs();
+      sprintln("[Code] >>> Code Version updated in NVS: " + currentCodeVersion + " <<<");
+    }
+
+    File file = SPIFFS.open("/sensor_code.bin", FILE_WRITE);
+    if (!file) {
+      sprintln("[Code] ERROR: Failed to open /sensor_code.bin in SPIFFS.");
+      http.end();
+      return;
+    }
+
+    WiFiClient* stream = http.getStreamPtr();
+    size_t totalBytesWritten = 0;
+    uint8_t buff[512];
+    unsigned long startRead = millis();
+
+    while (http.connected() && (payloadSize < 0 || (int)totalBytesWritten < payloadSize)) {
+      size_t avail = stream ? stream->available() : 0;
+      if (avail > 0) {
+        size_t toRead = avail > sizeof(buff) ? sizeof(buff) : avail;
+        int readBytes = stream->readBytes(buff, toRead);
+        if (readBytes > 0) {
+          file.write(buff, readBytes);
+          totalBytesWritten += readBytes;
+        }
+        startRead = millis();
+      } else {
+        if (millis() - startRead > 4000) break;
+        delay(5);
+      }
+    }
+    file.close();
+
+    printDivider();
+    sprintln("[Code] DOWNLOAD COMPLETE!");
+    sprintln("  Saved to Flash   : /sensor_code.bin");
+    sprintln("  File Size        : " + String(totalBytesWritten) + " bytes");
+    sprintln("  Active Version   : " + currentCodeVersion);
+    printDivider();
+
+    http.end();
+  } else if (httpCode == 404) {
+    sprintln("[Code] No active code file deployed on server yet.");
+    http.end();
+  } else {
+    sprintln("[Code] Download failed with HTTP " + String(httpCode) + ": " + http.getString());
+    http.end();
+  }
+}
+
+void checkCodeVersion() {
+  sprintln("\n[Code] Checking sensor code/firmware version on server...");
+  sprintln("  Currently installed code version: " + currentCodeVersion);
+
+  HTTPClient http;
+  if (!beginRequest(http, String(SERVER_BASE_URL) + "/api/v1/sensors/code/version-check")) {
+    http.end();
+    return;
+  }
+
+  http.addHeader("Content-Type",  "application/json");
+  http.addHeader("Authorization", "Bearer " + sensorToken);
+  http.addHeader("X-Sensor-ID",   SENSOR_ID);
+
+  JsonDocument doc;
+  doc["deviceId"]           = SENSOR_ID;
+  doc["currentVersion"]     = currentCodeVersion;
+  doc["currentCodeVersion"] = currentCodeVersion;
+
+  String body;
+  serializeJson(doc, body);
+
+  int httpCode = http.POST(body);
+  sprintln("[Code] HTTP Status: " + String(httpCode));
+
+  if (httpCode == 200) {
+    String respStr = http.getString();
+    JsonDocument resDoc;
+    deserializeJson(resDoc, respStr);
+
+    const char* result            = resDoc["result"] | "CURRENT";
+    const char* activeVersion     = resDoc["activeVersion"] | resDoc["code_version"];
+    bool        isUpdateAvailable = (String(result) == "UPDATE_AVAILABLE") || resDoc["isUpdateAvailable"];
+
+    printDivider();
+    sprintln("[Code] Status              : " + String(result));
+    sprintln("  Current Device Version   : " + currentCodeVersion);
+    sprintln("  Active Server Version    : " + String(activeVersion ? activeVersion : "None"));
+    sprintln("  Update Available         : " + String(isUpdateAvailable ? "YES" : "NO"));
+    printDivider();
+
+    http.end();
+
+    if (isUpdateAvailable) {
+      String targetVer = activeVersion ? String(activeVersion) : "";
+      sprintln("[Code] New code version detected: " + currentCodeVersion + " -> " + targetVer);
+      sprintln("[Code] Starting automatic download now...\n");
+      downloadCode(targetVer);
+    } else {
+      sprintln("[Code] Sensor code is up to date.");
+      sprintln("[Code] Downloading anyway to verify repeat download capability...\n");
+      downloadCode(activeVersion ? String(activeVersion) : "");
+    }
+  } else if (httpCode == 401) {
+    sprintln("[Code] Unauthorized (401). Use option [5] to re-register.");
+    http.end();
+  } else {
+    sprintln("[Code] Check failed with HTTP " + String(httpCode) + ": " + http.getString());
+    http.end();
+  }
+}
+
+// ============================================================
+// OPTION 5 — RE-REGISTER
 // Clears NVS token and registers freshly
 // ============================================================
 void reRegister() {
   sprintln("\n[Re-Register] Clearing token from NVS and initiating fresh registration...");
   sensorToken          = "";
   currentConfigVersion = "0.0.0";
+  currentCodeVersion   = "0.0.0";
   saveSensorPrefs();
 
   int attempt = 1;
@@ -805,15 +961,17 @@ void printMenu() {
   sprintln("  Sensor ID  : " + String(SENSOR_ID));
   sprintln("  Token      : " + (sensorToken.length() > 0 ? sensorToken.substring(0, 12) + "..." : "NOT REGISTERED"));
   sprintln("  Config Ver : " + currentConfigVersion);
+  sprintln("  Code Ver   : " + currentCodeVersion);
   sprintln("  WiFi RSSI  : " + String(WiFi.RSSI()) + " dBm");
   printDivider();
   sprintln("  [1] Send Heartbeat / Ping");
   sprintln("  [2] Upload Data File      (max 5 MB via Serial / sample CSV)");
-  sprintln("  [3] Check Version         (auto-downloads update if available)");
-  sprintln("  [4] Re-Register           (clears token & requests fresh token)");
+  sprintln("  [3] Check Configuration   (auto-downloads config update)");
+  sprintln("  [4] Check / Download Code (downloads active code file)");
+  sprintln("  [5] Re-Register           (clears token & requests fresh token)");
   sprintln("  [M] Re-display this menu");
   printDivider();
-  sprint("Enter choice (1-4) or 'M': ");
+  sprint("Enter choice (1-5) or 'M': ");
 }
 
 // ============================================================
@@ -898,9 +1056,10 @@ void loop() {
       if      (choice == "1")                  sendHeartbeat();
       else if (choice == "2")                  uploadData();
       else if (choice == "3")                  checkVersion();
-      else if (choice == "4")                  reRegister();
+      else if (choice == "4")                  checkCodeVersion();
+      else if (choice == "5")                  reRegister();
       else if (choice.equalsIgnoreCase("M"))   { /* Menu will re-print below */ }
-      else                                     sprintln("[Menu] Invalid choice. Enter 1, 2, 3, 4, or 'M'.");
+      else                                     sprintln("[Menu] Invalid choice. Enter 1, 2, 3, 4, 5, or 'M'.");
 
       delay(300);
       printMenu();
