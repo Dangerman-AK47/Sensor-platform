@@ -6,7 +6,7 @@
  *   node scripts/esp32_simulator.js [DEVICE_ID] [TOKEN]
  * 
  * Example:
- *   node scripts/esp32_simulator.js SENSOR-001 a8f4b2c1d3e567890123456789abcdefa8f4b2c1d3e567890123456789abcdef
+ *   node scripts/esp32_simulator.js SENSOR-001 96f2b8bb54046c51dfe7b105b2b55dcf
  */
 
 const http = require('http');
@@ -15,7 +15,7 @@ const SERVER_HOST = 'localhost';
 const SERVER_PORT = 8000;
 
 const DEVICE_ID = process.argv[2] || 'SENSOR-001';
-const TOKEN = process.argv[3] || 'a8f4b2c1d3e567890123456789abcdefa8f4b2c1d3e567890123456789abcdef';
+const TOKEN = process.argv[3] || '96f2b8bb54046c51dfe7b105b2b55dcf';
 
 console.log(`\n======================================================`);
 console.log(`📡 Starting ESP32 Simulator`);

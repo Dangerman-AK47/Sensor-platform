@@ -14,7 +14,8 @@
     {
       "key": "sensorToken",
       "value": "YOUR_SENSOR_BEARER_TOKEN",
-      "type": "string"
+      "type": "string",
+      "description": "32-character hex Bearer token returned from /api/v1/sensors/register"
     },
     {
       "key": "deviceId",
@@ -31,7 +32,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -39,10 +43,17 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/sensors/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sensors", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "register"
+              ]
             },
-            "description": "Registers device. Returns Bearer token immediately."
+            "description": "Registers device. Returns 32-character hex Bearer token immediately."
           }
         },
         {
@@ -50,9 +61,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
-              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -60,8 +80,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/sensors/heartbeat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sensors", "heartbeat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "heartbeat"
+              ]
             },
             "description": "Sends periodic ping and syncs latest sensor_version to admin website."
           }
@@ -71,9 +98,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
-              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -81,8 +117,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/sensors/version-check",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sensors", "version-check"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "version-check"
+              ]
             },
             "description": "Compares reported version against active configuration on server."
           }
@@ -92,25 +135,122 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
-              { "key": "X-Sensor-ID", "value": "{{deviceId}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/sensors/configuration/download",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sensors", "configuration", "download"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "configuration",
+                "download"
+              ]
             },
-            "description": "Downloads the active JSON configuration and records download audit."
+            "description": "Downloads the active JSON configuration and records download audit. Allows multiple repeat downloads unconditionally even if already up to date."
           }
         },
         {
-          "name": "5. Upload Telemetry Data File",
+          "name": "5. Check Sensor Code File Version",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{sensorToken}}" },
-              { "key": "X-Sensor-ID", "value": "{{deviceId}}" },
-              { "key": "X-Sensor-Version", "value": "1.1.1" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"currentVersion\": \"1.0.0\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/code/version-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "code",
+                "version-check"
+              ]
+            },
+            "description": "Checks if an OTA sensor code/firmware update is available on the server. Always returns downloadUrl."
+          }
+        },
+        {
+          "name": "6. Download Active Code File",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sensors/code/download?deviceId={{deviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "code",
+                "download"
+              ],
+              "query": [
+                {
+                  "key": "deviceId",
+                  "value": "{{deviceId}}"
+                }
+              ]
+            },
+            "description": "Streams active sensor code / firmware file to device. Allows multiple repeat downloads unconditionally even if already up to date."
+          }
+        },
+        {
+          "name": "7. Upload Telemetry Data File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sensorToken}}"
+              },
+              {
+                "key": "X-Sensor-ID",
+                "value": "{{deviceId}}"
+              },
+              {
+                "key": "X-Sensor-Version",
+                "value": "1.1.1"
+              }
             ],
             "body": {
               "mode": "formdata",
@@ -124,8 +264,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/sensors/upload",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "sensors", "upload"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sensors",
+                "upload"
+              ]
             },
             "description": "Uploads sensor data file (CSV / binary, max 100MB) with SHA-256 validation."
           }
@@ -140,7 +287,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -148,8 +298,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/user/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "user", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "login"
+              ]
             },
             "description": "Default credentials: user / password. Unlocks the public portal."
           }
@@ -160,8 +316,14 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/user/session",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "user", "session"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "session"
+              ]
             }
           }
         },
@@ -171,8 +333,14 @@
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/api/user/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "user", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "logout"
+              ]
             }
           }
         }
@@ -186,7 +354,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -194,8 +365,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "login"
+              ]
             },
             "description": "Authenticates admin. Saves cookie session automatically."
           }
@@ -206,8 +383,14 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/session",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "session"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "session"
+              ]
             }
           }
         },
@@ -217,8 +400,15 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors",
+                "stats"
+              ]
             }
           }
         },
@@ -228,13 +418,31 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors?search=&status=&page=1&perPage=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors"
+              ],
               "query": [
-                { "key": "search", "value": "" },
-                { "key": "status", "value": "" },
-                { "key": "page", "value": "1" },
-                { "key": "perPage", "value": "20" }
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPage",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -245,8 +453,15 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors", "{{deviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors",
+                "{{deviceId}}"
+              ]
             }
           }
         },
@@ -255,7 +470,10 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -263,8 +481,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors", "{{deviceId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors",
+                "{{deviceId}}",
+                "status"
+              ]
             }
           }
         },
@@ -274,9 +500,18 @@
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}/token",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors", "{{deviceId}}", "token"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors",
+                "{{deviceId}}",
+                "token"
+              ]
+            },
+            "description": "Revokes existing token and generates a new 32-character hex Bearer token."
           }
         },
         {
@@ -285,9 +520,17 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/admin/sensors/{{deviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "sensors", "{{deviceId}}"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "sensors",
+                "{{deviceId}}"
+              ]
+            },
+            "description": "Permanently deletes the sensor device and executes a complete, safe CASCADE purge across all 7 associated database tables with zero database errors."
           }
         },
         {
@@ -296,8 +539,14 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/configuration",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "configuration"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "configuration"
+              ]
             }
           }
         },
@@ -308,14 +557,28 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "version", "value": "1.2.0", "type": "text" },
-                { "key": "file", "type": "file", "src": "" }
+                {
+                  "key": "version",
+                  "value": "1.2.0",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/configuration",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "configuration"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "configuration"
+              ]
             }
           }
         },
@@ -325,82 +588,284 @@
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/api/admin/configuration/CONFIG_ID/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "configuration", "CONFIG_ID", "activate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "configuration",
+                "CONFIG_ID",
+                "activate"
+              ]
             }
           }
         },
         {
-          "name": "12. List Uploaded Files",
+          "name": "12. List Sensor Code Files",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/code-files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "code-files"
+              ]
+            },
+            "description": "Lists all uploaded sensor code / firmware files with version numbers and activation states."
+          }
+        },
+        {
+          "name": "13. Upload New Sensor Code File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "version",
+                  "value": "1.2.0",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/code-files/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "code-files",
+                "upload"
+              ]
+            },
+            "description": "Uploads a new sensor code/firmware file with an assigned version number."
+          }
+        },
+        {
+          "name": "14. Activate Sensor Code File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"CODE_FILE_ID\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/code-files/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "code-files",
+                "activate"
+              ]
+            },
+            "description": "Sets the specified code file as ACTIVE and archives the previous active."
+          }
+        },
+        {
+          "name": "15. Delete Sensor Code File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"CODE_FILE_ID\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/code-files/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "code-files",
+                "delete"
+              ]
+            },
+            "description": "Deletes an inactive or archived code file and unlinks its physical file."
+          }
+        },
+        {
+          "name": "16. Download Sensor Code File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/code-files/download?id=CODE_FILE_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "code-files",
+                "download"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "CODE_FILE_ID"
+                }
+              ]
+            },
+            "description": "Streams the code file from storage for administrative review."
+          }
+        },
+        {
+          "name": "17. List Uploaded Files",
           "request": {
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/files?search=&page=1&perPage=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "files"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "files"
+              ],
               "query": [
-                { "key": "search", "value": "" },
-                { "key": "page", "value": "1" },
-                { "key": "perPage", "value": "20" }
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPage",
+                  "value": "20"
+                }
               ]
             }
           }
         },
         {
-          "name": "13. Download Uploaded File",
+          "name": "18. Download Uploaded File",
           "request": {
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/admin/files/FILE_ID/download",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "files", "FILE_ID", "download"]
-            }
-          }
-        },
-        {
-          "name": "14. Delete Uploaded File",
-          "request": {
-            "method": "DELETE",
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/files/FILE_ID",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "files", "FILE_ID"]
-            }
-          }
-        },
-        {
-          "name": "15. Registration History",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/history?status=&page=1&perPage=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "history"],
-              "query": [
-                { "key": "status", "value": "" },
-                { "key": "page", "value": "1" },
-                { "key": "perPage", "value": "20" }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "files",
+                "FILE_ID",
+                "download"
               ]
             }
           }
         },
         {
-          "name": "16. Approve Registration Request",
+          "name": "19. Delete Uploaded File",
           "request": {
-            "method": "POST",
+            "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/admin/history/REQUEST_ID/approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "history", "REQUEST_ID", "approve"]
+              "raw": "{{baseUrl}}/api/admin/files/FILE_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "files",
+                "FILE_ID"
+              ]
             }
           }
         },
         {
-          "name": "17. Reject Registration Request",
+          "name": "20. Registration History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/history?status=&page=1&perPage=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPage",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "21. Approve Registration Request",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/history/REQUEST_ID/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "history",
+                "REQUEST_ID",
+                "approve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "22. Reject Registration Request",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -408,54 +873,89 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/history/REQUEST_ID/reject",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "history", "REQUEST_ID", "reject"]
-            }
-          }
-        },
-        {
-          "name": "18. Version Check Telemetry Metrics",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/version-check-metrics",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "version-check-metrics"]
-            }
-          }
-        },
-        {
-          "name": "19. Audit Logs",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/audit?page=1&perPage=25",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "audit"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "perPage", "value": "25" }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "history",
+                "REQUEST_ID",
+                "reject"
               ]
             }
           }
         },
         {
-          "name": "20. Get Settings (Admin & Portal User)",
+          "name": "23. Version Check Telemetry Metrics",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/admin/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "settings"]
+              "raw": "{{baseUrl}}/api/admin/version-check-metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "version-check-metrics"
+              ]
             }
           }
         },
         {
-          "name": "21. Update Admin Credentials",
+          "name": "24. Audit Logs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/audit?page=1&perPage=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "perPage",
+                  "value": "25"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "25. Get Settings (Admin & Portal User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "26. Update Admin Credentials",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -463,17 +963,27 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/settings/admin-credentials",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "settings", "admin-credentials"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings",
+                "admin-credentials"
+              ]
             }
           }
         },
         {
-          "name": "22. Update Portal User Credentials",
+          "name": "27. Update Portal User Credentials",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -481,20 +991,34 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/settings/user-credentials",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "settings", "user-credentials"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings",
+                "user-credentials"
+              ]
             }
           }
         },
         {
-          "name": "23. Admin Logout",
+          "name": "28. Admin Logout",
           "request": {
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/api/admin/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "logout"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "logout"
+              ]
+            },
+            "description": "Terminates administrator session and redirects to home page (/). Accessible via POST /api/admin/logout or GET /admin/logout."
           }
         }
       ]

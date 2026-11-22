@@ -134,7 +134,7 @@ If you wish to run the PHP stack locally with MySQL:
 ### Testing with the CLI Simulator (No Hardware Required)
 You can test the entire ESP32 communication lifecycle immediately using the built-in simulator:
 ```powershell
-node scripts/esp32_simulator.js SENSOR-001 a8f4b2c1d3e567890123456789abcdefa8f4b2c1d3e567890123456789abcdef
+node scripts/esp32_simulator.js SENSOR-001 96f2b8bb54046c51dfe7b105b2b55dcf
 ```
 The simulator sends heartbeats every 30 seconds, runs version checks, and uploads simulated telemetry readings every 60 seconds.
 
@@ -144,3 +144,32 @@ The simulator sends heartbeats every 30 seconds, runs version checks, and upload
 
 - **Instant Runner:** Delete `storage/dev_db.json`. When restarted, the server automatically repopulates fresh default seed data.
 - **MySQL/PHP Runner:** Re-run `mysql -u root -p sensordb < database\schema.sql` followed by `mysql -u root -p sensordb < database\seed.sql`.
+
+---
+
+## 7. API Reference & Postman Collection
+
+Detailed Postman and curl documentation is available in [`API_DOCUMENTATION_POSTMAN.txt`](API_DOCUMENTATION_POSTMAN.txt) and [`postman/ALL_APIS_POSTMAN_FORMAT.txt`](postman/ALL_APIS_POSTMAN_FORMAT.txt).
+Import [`postman/sensor_platform_collection.json`](postman/sensor_platform_collection.json) directly into Postman for instant testing.
+
+### Key API Endpoints
+
+#### 1. IoT Sensor APIs (`/api/v1/sensors/*`) — Auth: `Bearer <32-char token>`
+* `POST /api/v1/sensors/register` — Auto-register device; returns a 32-character hex Bearer token.
+* `POST /api/v1/sensors/heartbeat` — Telemetry heartbeat (free heap, RSSI, uptime, sensor version).
+* `POST /api/v1/sensors/version-check` — Configuration version check; always provides download URL.
+* `GET  /api/v1/sensors/configuration/download?deviceId=<id>` — Download active configuration JSON (unrestricted repeat downloads supported).
+* `POST /api/v1/sensors/code/version-check` — Check sensor code/firmware version.
+* `GET  /api/v1/sensors/code/download?deviceId=<id>` — Download active code/firmware file (unrestricted repeat downloads supported).
+* `POST /api/v1/sensors/upload` — Multipart telemetry data file upload (max 100 MB).
+
+#### 2. Admin APIs (`/api/admin/*`) — Auth: Admin Session Cookie
+* `POST /api/admin/login` — Administrator authentication.
+* `POST /api/admin/logout` (or `GET /admin/logout`) — Sign out; redirects immediately to home page (`/`).
+* `GET  /api/admin/sensors` & `GET /api/admin/sensors/:id` — Sensor device management.
+* `DELETE /api/admin/sensors/:id` — Cascade delete sensor across all associated database tables without errors.
+* `POST /api/admin/sensors/:id/token` — Regenerate 32-character hex Bearer token.
+* `GET  /api/admin/configuration` & `POST /api/admin/configuration` — Configuration version management.
+* `GET  /api/admin/code-files` & `POST /api/admin/code-files/upload` — Sensor code file management and activation.
+* `POST /api/admin/code-files/activate` & `POST /api/admin/code-files/delete` — Activate or remove code files.
+

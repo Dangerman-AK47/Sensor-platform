@@ -14,7 +14,7 @@ POSTMAN ENVIRONMENT VARIABLES
 Variable Name   Default Value / Example
 -------------   ----------------------------------------------------------------
 baseUrl         https://realtimeprojectsolutions.com
-sensorToken     <64-hex Bearer token returned from /api/v1/sensors/register>
+sensorToken     <32-hex Bearer token returned from /api/v1/sensors/register>
 deviceId        ESP32-DEVICE-001
 
 
@@ -27,7 +27,7 @@ Authentication: Sensor Bearer Token ("Authorization: Bearer <token>")
 1.1 Register Sensor (Auto-Approval)
 --------------------------------------------------------------------------------
 Description: Registers a new ESP32 sensor. If approved, immediately returns the
-             Bearer token.
+             32-character hex Bearer token.
 Method     : POST
 URL        : {{baseUrl}}/api/v1/sensors/register
 Headers    :
@@ -49,7 +49,7 @@ Expected Response (201 Created):
   "success": true,
   "status": "AUTO_APPROVED",
   "deviceId": "ESP32-DEVICE-001",
-  "token": "4f8a92b...64_hex_characters...",
+  "token": "96f2b8bb54046c51dfe7b105b2b55dcf",
   "requestId": "req-1792476058771",
   "message": "Sensor automatically approved! Store your Bearer token securely."
 }
@@ -105,6 +105,7 @@ Expected Response (200 OK):
 1.3 Check Configuration Version
 --------------------------------------------------------------------------------
 Description: Checks if an OTA configuration update is available on the server.
+             Always provides downloadUrl so devices can re-download anytime.
 Method     : POST
 URL        : {{baseUrl}}/api/v1/sensors/version-check
 Headers    :
@@ -114,12 +115,14 @@ Headers    :
 
 Body (raw JSON):
 {
+  "deviceId": "ESP32-DEVICE-001",
   "currentVersion": "1.0.0"
 }
 
 Expected Response when Update Available (200 OK):
 {
   "result": "UPDATE_AVAILABLE",
+  "isUpdateAvailable": true,
   "activeVersion": "1.1.1",
   "reportedVersion": "1.0.0",
   "downloadUrl": "/api/v1/sensors/configuration/download?deviceId=ESP32-DEVICE-001"
@@ -128,16 +131,19 @@ Expected Response when Update Available (200 OK):
 Expected Response when Current (200 OK):
 {
   "result": "CURRENT",
+  "isUpdateAvailable": false,
   "activeVersion": "1.1.1",
   "reportedVersion": "1.1.1",
-  "downloadUrl": null
+  "downloadUrl": "/api/v1/sensors/configuration/download?deviceId=ESP32-DEVICE-001"
 }
 
 
 --------------------------------------------------------------------------------
-1.4 Download Active Configuration File
+1.4 Download Active Configuration File (Multiple Downloads Supported)
 --------------------------------------------------------------------------------
 Description: Streams the active JSON configuration file to the device.
+             A single sensor can download this configuration file multiple times
+             unconditionally even if it is already up to date.
              Automatically updates sensor_version in database to match active.
 Method     : GET
 URL        : {{baseUrl}}/api/v1/sensors/configuration/download?deviceId={{deviceId}}
@@ -155,7 +161,74 @@ Body:
 
 
 --------------------------------------------------------------------------------
-1.5 Upload Telemetry File (Max 100 MB)
+1.5 Check Sensor Code File Version
+--------------------------------------------------------------------------------
+Description: Checks if an OTA sensor code/firmware update is available on the server.
+             Always provides downloadUrl so devices can re-download code anytime.
+Method     : POST
+URL        : {{baseUrl}}/api/v1/sensors/code/version-check
+Headers    :
+  Content-Type: application/json
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+
+Body (raw JSON):
+{
+  "deviceId": "ESP32-DEVICE-001",
+  "currentVersion": "1.0.0"
+}
+
+Expected Response when Update Available (200 OK):
+{
+  "result": "UPDATE_AVAILABLE",
+  "isUpdateAvailable": true,
+  "activeVersion": "1.2.0",
+  "reportedVersion": "1.0.0",
+  "downloadUrl": "/api/v1/sensors/code/download?deviceId=ESP32-DEVICE-001"
+}
+
+Expected Response when Current (200 OK):
+{
+  "result": "CURRENT",
+  "isUpdateAvailable": false,
+  "activeVersion": "1.2.0",
+  "reportedVersion": "1.2.0",
+  "downloadUrl": "/api/v1/sensors/code/download?deviceId=ESP32-DEVICE-001"
+}
+
+Expected Response when No Code File Deployed (200 OK):
+{
+  "result": "NO_CODE_AVAILABLE",
+  "isUpdateAvailable": false,
+  "activeVersion": null,
+  "reportedVersion": "1.0.0",
+  "downloadUrl": null
+}
+
+
+--------------------------------------------------------------------------------
+1.6 Download Active Sensor Code File (Multiple Downloads Supported)
+--------------------------------------------------------------------------------
+Description: Streams the active code / firmware file to the device.
+             A single sensor can download this code file multiple times
+             unconditionally even if it is already up to date.
+Method     : GET
+URL        : {{baseUrl}}/api/v1/sensors/code/download?deviceId={{deviceId}}
+Headers    :
+  Authorization: Bearer {{sensorToken}}
+  X-Sensor-ID: {{deviceId}}
+
+Expected Response (200 OK):
+Response Headers:
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment; filename="firmware_v1.2.0.bin"
+  X-Code-Version: 1.2.0
+Body:
+  <Raw binary or text content of active code file>
+
+
+--------------------------------------------------------------------------------
+1.7 Upload Telemetry File (Max 100 MB)
 --------------------------------------------------------------------------------
 Description: Ingests sensor data file (CSV / binary), stores to disk, verifies
              SHA-256 checksum, and updates device upload count & total bytes.
@@ -425,7 +498,7 @@ Expected Response (200 OK):
 --------------------------------------------------------------------------------
 3.7 Regenerate Sensor Bearer Token
 --------------------------------------------------------------------------------
-Description: Revokes existing token and generates a new CSPRNG 64-hex Bearer token.
+Description: Revokes existing token and generates a new CSPRNG 32-hex Bearer token.
 Method     : POST
 URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}/token
 
@@ -434,7 +507,7 @@ Expected Response (200 OK):
   "success": true,
   "data": {
     "deviceId": "ESP32-DEVICE-001",
-    "rawToken": "e7b1a2...new_64_hex_token..."
+    "rawToken": "e7b1a2bb54046c51dfe7b105b2b55dcf"
   },
   "message": "New bearer token generated. Save it now; it will not be displayed again."
 }
@@ -443,8 +516,16 @@ Expected Response (200 OK):
 --------------------------------------------------------------------------------
 3.8 Permanently Delete Sensor Device
 --------------------------------------------------------------------------------
-Description: Permanently deletes the sensor device and performs CASCADE purge of
-             all registration requests and uploaded file records.
+Description: Permanently deletes the sensor device and executes a safe CASCADE
+             purge across all 7 associated database tables:
+             - fv_uploaded_file_records (with physical disk file unlinking)
+             - fv_sensor_config_download_audits
+             - fv_sensor_version_check_events
+             - fv_daily_sensor_version_check_metrics
+             - fv_device_status_events
+             - fv_device_registration_requests
+             - fv_registered_devices
+             Zero database or foreign-key errors.
 Method     : DELETE
 URL        : {{baseUrl}}/api/admin/sensors/{{deviceId}}
 
@@ -528,7 +609,122 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.12 List Uploaded Files
+3.12 List Sensor Code Files
+--------------------------------------------------------------------------------
+Description: Lists all uploaded sensor code / firmware files with version numbers
+             and activation states (ACTIVE, INACTIVE, ARCHIVED).
+Method     : GET
+URL        : {{baseUrl}}/api/admin/code-files
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "codeFiles": [
+      {
+        "id": "code-001",
+        "code_version": "1.2.0",
+        "status": "ACTIVE",
+        "original_file_name": "firmware_v1.2.0.bin",
+        "file_size_bytes": 1048576,
+        "checksum": "d41d8cd98f00b204e9800998ecf8427e...",
+        "uploader_username": "admin",
+        "activator_username": "admin",
+        "activated_at": "2026-11-21 20:00:00",
+        "created_at": "2026-11-21 19:30:00"
+      }
+    ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3.13 Upload New Sensor Code File
+--------------------------------------------------------------------------------
+Description: Uploads a new sensor code/firmware file with an assigned version number.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/code-files/upload
+
+Body (form-data):
+  version : 1.2.0 (Text)
+  file    : [Select firmware or code file from disk, e.g. firmware.bin or sketch.ino]
+
+Expected Response (201 Created):
+{
+  "success": true,
+  "data": {
+    "id": "code-001",
+    "version": "1.2.0",
+    "filename": "firmware.bin",
+    "fileSize": 1048576,
+    "checksum": "d41d8cd98f00b204e9800998ecf8427e..."
+  },
+  "message": "Code file uploaded successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.14 Activate Sensor Code File
+--------------------------------------------------------------------------------
+Description: Sets the specified code file as ACTIVE and archives the previous active.
+             Sensors checking for code updates will receive UPDATE_AVAILABLE.
+Method     : POST
+URL        : {{baseUrl}}/api/admin/code-files/activate
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "id": "code-001"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "data": {
+    "id": "code-001",
+    "version": "1.2.0",
+    "activatedAt": "2026-11-21T20:00:00+00:00"
+  },
+  "message": "Code file activated successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.15 Delete Sensor Code File
+--------------------------------------------------------------------------------
+Description: Deletes an inactive or archived code file and unlinks its physical file.
+             Currently ACTIVE code files cannot be deleted (activate another first).
+Method     : POST
+URL        : {{baseUrl}}/api/admin/code-files/delete
+Headers    :
+  Content-Type: application/json
+
+Body (raw JSON):
+{
+  "id": "code-002"
+}
+
+Expected Response (200 OK):
+{
+  "success": true,
+  "message": "Code file deleted successfully"
+}
+
+
+--------------------------------------------------------------------------------
+3.16 Download Code File
+--------------------------------------------------------------------------------
+Description: Streams the code file from storage for administrative review.
+Method     : GET
+URL        : {{baseUrl}}/api/admin/code-files/download?id=CODE_ID
+
+Expected Response (200 OK):
+  File stream download with original file name & MIME type.
+
+
+--------------------------------------------------------------------------------
+3.17 List Uploaded Files
 --------------------------------------------------------------------------------
 Description: Lists telemetry files uploaded by all devices with pagination.
 Method     : GET
@@ -561,7 +757,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.13 Download Uploaded File
+3.18 Download Uploaded File
 --------------------------------------------------------------------------------
 Description: Downloads raw file from server storage by file record ID.
 Method     : GET
@@ -572,7 +768,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.14 Delete Uploaded File
+3.19 Delete Uploaded File
 --------------------------------------------------------------------------------
 Description: Deletes file from storage and database. Updates device storage usage.
 Method     : DELETE
@@ -586,7 +782,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.15 Device Registration History
+3.20 Device Registration History
 --------------------------------------------------------------------------------
 Description: Lists device registration attempts and their status (PENDING, APPROVED,
              AUTO_APPROVED, REJECTED).
@@ -608,7 +804,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.16 Approve Device Registration Request
+3.21 Approve Device Registration Request
 --------------------------------------------------------------------------------
 Description: Manually approves a pending registration request and returns a Bearer token.
 Method     : POST
@@ -619,7 +815,7 @@ Expected Response (200 OK):
   "success": true,
   "data": {
     "deviceId": "ESP32-DEVICE-001",
-    "token": "4f8a...64_hex_token...",
+    "token": "96f2b8bb54046c51dfe7b105b2b55dcf",
     "status": "APPROVED"
   },
   "message": "Registration request approved. Provide the bearer token to device now."
@@ -627,7 +823,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.17 Reject Device Registration Request
+3.22 Reject Device Registration Request
 --------------------------------------------------------------------------------
 Description: Rejects a pending registration request with a recorded reason.
 Method     : POST
@@ -648,7 +844,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.18 Version Check Telemetry Metrics
+3.23 Version Check Telemetry Metrics
 --------------------------------------------------------------------------------
 Description: Returns cumulative version check telemetry metrics aggregated per device.
 Method     : GET
@@ -671,7 +867,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.19 View Audit Logs
+3.24 View Audit Logs
 --------------------------------------------------------------------------------
 Description: Retrieves immutable security audit trail events.
 Method     : GET
@@ -700,7 +896,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.20 Get Settings (Admin & Portal User Metadata)
+3.25 Get Settings (Admin & Portal User Metadata)
 --------------------------------------------------------------------------------
 Description: Retrieves primary administrator and portal user metadata for settings view.
 Method     : GET
@@ -727,7 +923,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.21 Update Admin Username / Password
+3.26 Update Admin Username / Password
 --------------------------------------------------------------------------------
 Description: Updates administrator credentials with bcrypt hashing. Takes effect
              immediately on subsequent login.
@@ -754,7 +950,7 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.22 Update Portal User Username / Password
+3.27 Update Portal User Username / Password
 --------------------------------------------------------------------------------
 Description: Updates public portal credentials. Users unlocking the portal must
              supply this updated password on next login.
@@ -781,15 +977,20 @@ Expected Response (200 OK):
 
 
 --------------------------------------------------------------------------------
-3.23 Admin Logout
+3.28 Admin Logout
 --------------------------------------------------------------------------------
-Description: Terminates administrator session and clears session cookie.
+Description: Terminates administrator session and redirects to the home page (/).
+             Web Route (GET)  : {{baseUrl}}/admin/logout (clears session and redirects to /)
+             API Route (POST) : {{baseUrl}}/api/admin/logout (returns JSON with redirect to /)
 Method     : POST
 URL        : {{baseUrl}}/api/admin/logout
 
 Expected Response (200 OK):
 {
   "success": true,
+  "data": {
+    "redirect": "/"
+  },
   "message": "Logged out successfully"
 }
 
