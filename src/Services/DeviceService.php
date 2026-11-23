@@ -241,8 +241,7 @@ class DeviceService
             $db = Database::getConnection();
             $fields = ['`last_seen_at` = NOW()'];
             $params = [
-                'target_id' => $deviceIdOrPk,
-                'target_dev_id' => $deviceIdOrPk
+                'target_id' => $deviceIdOrPk
             ];
 
             if (!empty($sensorVersion) && $sensorVersion !== '0.0.0') {
@@ -262,9 +261,15 @@ class DeviceService
                 $params['metadata'] = $metadata;
             }
 
-            $sql = 'UPDATE `fv_registered_devices` SET ' . implode(', ', $fields) . ' WHERE `id` = :target_id OR `device_id` = :target_dev_id';
+            // Target by primary key first to prevent touching duplicate-named sensors
+            $sql = 'UPDATE `fv_registered_devices` SET ' . implode(', ', $fields) . ' WHERE `id` = :target_id';
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
+            if ($stmt->rowCount() === 0) {
+                $sqlFallback = 'UPDATE `fv_registered_devices` SET ' . implode(', ', $fields) . ' WHERE `device_id` = :target_id LIMIT 1';
+                $stmtFallback = $db->prepare($sqlFallback);
+                $stmtFallback->execute($params);
+            }
         } catch (\Throwable $e) {
             error_log("Failed to record heartbeat: " . $e->getMessage());
         }
@@ -279,12 +284,19 @@ class DeviceService
 
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare('UPDATE `fv_registered_devices` SET `sensor_version` = :ver, `last_seen_at` = NOW() WHERE `id` = :target_id OR `device_id` = :target_dev_id');
+            // Target by primary key first
+            $stmt = $db->prepare('UPDATE `fv_registered_devices` SET `sensor_version` = :ver, `last_seen_at` = NOW() WHERE `id` = :target_id');
             $stmt->execute([
                 'ver' => $version,
-                'target_id' => $deviceIdOrPk,
-                'target_dev_id' => $deviceIdOrPk
+                'target_id' => $deviceIdOrPk
             ]);
+            if ($stmt->rowCount() === 0) {
+                $stmtFallback = $db->prepare('UPDATE `fv_registered_devices` SET `sensor_version` = :ver, `last_seen_at` = NOW() WHERE `device_id` = :target_id LIMIT 1');
+                $stmtFallback->execute([
+                    'ver' => $version,
+                    'target_id' => $deviceIdOrPk
+                ]);
+            }
         } catch (\Throwable $e) {
             error_log("Failed to update sensor version: " . $e->getMessage());
         }
@@ -298,19 +310,6 @@ class DeviceService
         }
 
         $db = Database::getConnection();
-
-        // Check if device already registered
-        $check = $db->prepare('SELECT id, status FROM fv_registered_devices WHERE device_id = :id LIMIT 1');
-        $check->execute(['id' => $deviceId]);
-        $existing = $check->fetch();
-
-        if ($existing && $existing['status'] === 'ACTIVE') {
-            return [
-                'status' => 'CONFLICT',
-                'message' => 'Device is already registered and active'
-            ];
-        }
-
         $db->beginTransaction();
         try {
             $requestId = bin2hex(random_bytes(16));
@@ -336,29 +335,50 @@ class DeviceService
                 'key' => bin2hex(random_bytes(16))
             ]);
 
-            // Upsert device immediately as ACTIVE
-            $devStmt = $db->prepare('
-                INSERT INTO fv_registered_devices
-                (id, device_id, status, registered_at, token_hash, sensor_version, firmware_version, hardware_model, metadata)
-                VALUES (:id, :device_id, "ACTIVE", NOW(), :token_hash, :sensor_ver, :fw_ver, :hw, :meta)
-                ON DUPLICATE KEY UPDATE
-                status = "ACTIVE",
-                token_hash = VALUES(token_hash),
-                sensor_version = VALUES(sensor_version),
-                firmware_version = VALUES(firmware_version),
-                hardware_model = VALUES(hardware_model),
-                metadata = VALUES(metadata)
-            ');
-            $devicePk = bin2hex(random_bytes(16));
-            $devStmt->execute([
-                'id' => $devicePk,
-                'device_id' => $deviceId,
-                'token_hash' => $tokenData['tokenHash'],
-                'sensor_ver' => $meta['sensorVersion'],
-                'fw_ver' => $meta['firmwareVersion'],
-                'hw' => $meta['hardwareModel'],
-                'meta' => json_encode($meta['metadata'])
-            ]);
+            // Check if device is already registered
+            $check = $db->prepare('SELECT id FROM fv_registered_devices WHERE device_id = :id LIMIT 1');
+            $check->execute(['id' => $deviceId]);
+            $existing = $check->fetch();
+
+            if ($existing) {
+                // Device already registered -> re-register the device: issue new token, activate status, refresh metadata
+                $devStmt = $db->prepare('
+                    UPDATE fv_registered_devices
+                    SET status = "ACTIVE",
+                        token_hash = :token_hash,
+                        sensor_version = :sensor_ver,
+                        firmware_version = :fw_ver,
+                        hardware_model = :hw,
+                        metadata = :meta,
+                        last_seen_at = NOW()
+                    WHERE id = :id
+                ');
+                $devStmt->execute([
+                    'id' => $existing['id'],
+                    'token_hash' => $tokenData['tokenHash'],
+                    'sensor_ver' => $meta['sensorVersion'],
+                    'fw_ver' => $meta['firmwareVersion'],
+                    'hw' => $meta['hardwareModel'],
+                    'meta' => json_encode($meta['metadata'])
+                ]);
+            } else {
+                // First-time registration
+                $devicePk = bin2hex(random_bytes(16));
+                $devStmt = $db->prepare('
+                    INSERT INTO fv_registered_devices
+                    (id, device_id, status, registered_at, token_hash, sensor_version, firmware_version, hardware_model, metadata, last_seen_at)
+                    VALUES (:id, :device_id, "ACTIVE", NOW(), :token_hash, :sensor_ver, :fw_ver, :hw, :meta, NOW())
+                ');
+                $devStmt->execute([
+                    'id' => $devicePk,
+                    'device_id' => $deviceId,
+                    'token_hash' => $tokenData['tokenHash'],
+                    'sensor_ver' => $meta['sensorVersion'],
+                    'fw_ver' => $meta['firmwareVersion'],
+                    'hw' => $meta['hardwareModel'],
+                    'meta' => json_encode($meta['metadata'])
+                ]);
+            }
 
             $db->commit();
 
@@ -525,64 +545,72 @@ class DeviceService
             $deviceId = $device['device_id'];
             $devPk = $device['id'];
 
-            // 1. Delete associated uploaded files from disk & DB
+            // Check if other sensors share this same device_id
+            $otherCheck = $db->prepare('SELECT COUNT(*) FROM fv_registered_devices WHERE device_id = :did AND id != :pk');
+            $otherCheck->execute(['did' => $deviceId, 'pk' => $devPk]);
+            $hasOtherSensors = (int)$otherCheck->fetchColumn() > 0;
+
+            // 1. Delete associated uploaded files for this specific device instance from disk & DB
             try {
-                $filesStmt = $db->prepare('SELECT storage_key FROM fv_uploaded_file_records WHERE registered_device_id = :pk OR device_id = :did');
-                $filesStmt->execute(['pk' => $devPk, 'did' => $deviceId]);
+                $filesStmt = $db->prepare('SELECT storage_key FROM fv_uploaded_file_records WHERE registered_device_id = :pk');
+                $filesStmt->execute(['pk' => $devPk]);
                 $files = $filesStmt->fetchAll();
                 foreach ($files as $f) {
                     if (!empty($f['storage_key'])) {
                         StorageService::deleteFile($f['storage_key']);
                     }
                 }
-                $delFiles = $db->prepare('DELETE FROM fv_uploaded_file_records WHERE registered_device_id = :pk OR device_id = :did');
-                $delFiles->execute(['pk' => $devPk, 'did' => $deviceId]);
+                $delFiles = $db->prepare('DELETE FROM fv_uploaded_file_records WHERE registered_device_id = :pk');
+                $delFiles->execute(['pk' => $devPk]);
             } catch (\Throwable $e) {
                 error_log("deleteDevice warning (uploaded files): " . $e->getMessage());
             }
 
-            // 2. Delete config download audits
-            try {
-                $delDl = $db->prepare('DELETE FROM fv_sensor_config_download_audits WHERE device_id = :did');
-                $delDl->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {
+            // Only clean shared history if this is the only or last instance of this device_id
+            if (!$hasOtherSensors) {
+                // 2. Delete config download audits
                 try {
-                    $delDl2 = $db->prepare('DELETE FROM fv_sensor_config_download_events WHERE device_id = :did');
-                    $delDl2->execute(['did' => $deviceId]);
-                } catch (\Throwable $e2) {}
+                    $delDl = $db->prepare('DELETE FROM fv_sensor_config_download_audits WHERE device_id = :did');
+                    $delDl->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {
+                    try {
+                        $delDl2 = $db->prepare('DELETE FROM fv_sensor_config_download_events WHERE device_id = :did');
+                        $delDl2->execute(['did' => $deviceId]);
+                    } catch (\Throwable $e2) {}
+                }
+
+                // 3. Delete version check events
+                try {
+                    $delEv = $db->prepare('DELETE FROM fv_sensor_version_check_events WHERE device_id = :did');
+                    $delEv->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {}
+
+                // 4. Delete daily metrics
+                try {
+                    $delMetrics = $db->prepare('DELETE FROM fv_daily_sensor_version_check_metrics WHERE device_id = :did');
+                    $delMetrics->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {}
+                try {
+                    $delMetrics2 = $db->prepare('DELETE FROM fv_daily_sensor_version_metrics WHERE device_id = :did');
+                    $delMetrics2->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {}
+
+                // 5. Delete device status events
+                try {
+                    $delEvents = $db->prepare('DELETE FROM fv_device_status_events WHERE device_id = :did');
+                    $delEvents->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {}
+
+                // 6. Delete registration requests
+                try {
+                    $delRequests = $db->prepare('DELETE FROM fv_device_registration_requests WHERE device_id = :did');
+                    $delRequests->execute(['did' => $deviceId]);
+                } catch (\Throwable $e) {}
             }
 
-            // 3. Delete version check events
-            try {
-                $delEv = $db->prepare('DELETE FROM fv_sensor_version_check_events WHERE device_id = :did');
-                $delEv->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {}
-
-            // 4. Delete daily metrics
-            try {
-                $delMetrics = $db->prepare('DELETE FROM fv_daily_sensor_version_check_metrics WHERE device_id = :did');
-                $delMetrics->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {}
-            try {
-                $delMetrics2 = $db->prepare('DELETE FROM fv_daily_sensor_version_metrics WHERE device_id = :did');
-                $delMetrics2->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {}
-
-            // 5. Delete device status events
-            try {
-                $delEvents = $db->prepare('DELETE FROM fv_device_status_events WHERE device_id = :did');
-                $delEvents->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {}
-
-            // 6. Delete registration requests
-            try {
-                $delRequests = $db->prepare('DELETE FROM fv_device_registration_requests WHERE device_id = :did');
-                $delRequests->execute(['did' => $deviceId]);
-            } catch (\Throwable $e) {}
-
-            // 7. Delete device itself
-            $delDev = $db->prepare('DELETE FROM fv_registered_devices WHERE id = :pk OR device_id = :did');
-            $delDev->execute(['pk' => $devPk, 'did' => $deviceId]);
+            // 7. Delete this specific device instance record
+            $delDev = $db->prepare('DELETE FROM fv_registered_devices WHERE id = :pk');
+            $delDev->execute(['pk' => $devPk]);
 
             $db->commit();
 

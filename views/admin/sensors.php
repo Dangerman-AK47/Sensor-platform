@@ -56,7 +56,7 @@ function formatBytesShort($bytes) {
                         <?php foreach ($data['devices'] as $dev): ?>
                             <tr>
                                 <td>
-                                    <a href="/admin/sensors/<?= urlencode($dev['device_id']) ?>" class="font-mono" style="font-weight: 600; color: var(--accent-500); text-decoration: none;">
+                                    <a href="/admin/sensors/<?= urlencode($dev['id']) ?>" class="font-mono" style="font-weight: 600; color: var(--accent-500); text-decoration: none;">
                                         <?= htmlspecialchars($dev['device_id']) ?>
                                     </a>
                                 </td>
@@ -77,7 +77,7 @@ function formatBytesShort($bytes) {
                                 <td><strong><?= $dev['upload_count'] ?></strong></td>
                                 <td style="font-size: 12px;"><?= formatBytesShort($dev['total_storage_bytes']) ?></td>
                                 <td style="text-align: right; white-space: nowrap;">
-                                    <a href="/admin/sensors/<?= urlencode($dev['device_id']) ?>" class="btn btn-ghost btn-sm">View</a>
+                                    <a href="/admin/sensors/<?= urlencode($dev['id']) ?>" class="btn btn-ghost btn-sm">View</a>
                                     <?php if ($dev['status'] === 'ACTIVE'): ?>
                                         <button onclick="toggleSensorStatus('<?= htmlspecialchars($dev['id']) ?>', 'DEACTIVE')" class="btn btn-ghost btn-sm" style="color: var(--danger-500);">Deactivate</button>
                                     <?php else: ?>

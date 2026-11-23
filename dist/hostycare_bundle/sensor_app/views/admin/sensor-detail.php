@@ -20,7 +20,7 @@ function formatDetailBytes($bytes) {
         <div class="card-header">
             <div>
                 <h3 class="card-title font-mono"><?= htmlspecialchars($device['device_id']) ?></h3>
-                <p class="card-desc">Registered on <?= date('F j, Y, H:i', strtotime($device['registered_at'])) ?></p>
+                <p class="card-desc">Instance ID: <span class="font-mono" style="font-size: 11px;"><?= htmlspecialchars($device['id']) ?></span> &bull; Registered on <?= date('F j, Y, H:i', strtotime($device['registered_at'])) ?></p>
             </div>
             <div>
                 <?php if ($device['status'] === 'ACTIVE'): ?>

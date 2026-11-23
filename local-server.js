@@ -301,17 +301,19 @@ function authenticateSensor(req) {
 
     let dev = null;
     if (deviceIdHeader) {
-        dev = db.registered_devices.find(d => d.device_id.toUpperCase() === deviceIdHeader.toUpperCase());
-    } else {
-        dev = db.registered_devices.find(d => d.token_hash === tokenHash || d.token_hash === token);
+        dev = db.registered_devices.find(d => 
+            d.device_id.toUpperCase() === deviceIdHeader.toUpperCase() &&
+            (d.token_hash === tokenHash || d.token_hash === token || d.token_hash?.includes(token))
+        );
+    }
+    if (!dev) {
+        dev = db.registered_devices.find(d => d.token_hash === tokenHash || d.token_hash === token || d.token_hash?.includes(token));
     }
 
     if (dev) {
-        if (dev.token_hash === tokenHash || dev.token_hash === token || dev.token_hash?.includes(token)) {
-            dev.last_seen_at = new Date().toISOString();
-            saveDb();
-            return dev;
-        }
+        dev.last_seen_at = new Date().toISOString();
+        saveDb();
+        return dev;
     }
     return null;
 }
@@ -407,15 +409,14 @@ const server = http.createServer(async (req, res) => {
             const deviceId = (body.deviceId || '').trim().toUpperCase();
             if (!deviceId) return sendError(res, 'Missing deviceId', 400);
 
-            const existing = db.registered_devices.find(d => d.device_id === deviceId);
-            if (existing && existing.status === 'ACTIVE') {
-                return sendError(res, 'Device is already registered and active', 409);
-            }
-
-            const rawToken = crypto.randomBytes(32).toString('hex');
+            // Generate 32-character hex token (16 random bytes)
+            const rawToken = crypto.randomBytes(16).toString('hex');
             const tokenHash = hashToken(rawToken);
-            const reqId = 'req-' + Date.now();
+            const reqId = 'req-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+            const devId = 'dev-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
 
+            // If device already registered, register it again (renew token, activate status, refresh metadata)
+            const existing = db.registered_devices.find(d => d.device_id === deviceId);
             if (existing) {
                 existing.status = 'ACTIVE';
                 existing.token_hash = tokenHash;
@@ -426,7 +427,7 @@ const server = http.createServer(async (req, res) => {
                 existing.metadata = body.metadata || existing.metadata || {};
             } else {
                 db.registered_devices.unshift({
-                    id: 'dev-' + Date.now(),
+                    id: devId,
                     device_id: deviceId,
                     status: 'ACTIVE',
                     registered_at: new Date().toISOString(),
@@ -570,6 +571,49 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({ config_version: activeCfg.config_version, status: 'ACTIVE' }));
             return;
         }
+    }
+
+    if (pathname === '/api/v1/sensors/code/version-check' && method === 'POST') {
+        const dev = authenticateSensor(req);
+        if (!dev) return sendError(res, 'Unauthorized: Invalid Bearer token', 401);
+        if (dev.status !== 'ACTIVE') return sendError(res, 'Sensor deactivated', 403, { result: 'SENSOR_DEACTIVATED' });
+
+        const bodyBuf = await readBody(req);
+        const body = JSON.parse(bodyBuf.toString() || '{}');
+        const currentCodeVersion = body.currentCodeVersion || body.currentVersion || '0.0.0';
+
+        const activeCode = (db.global_sensor_code_files || []).find(c => c.status === 'ACTIVE') || {
+            code_version: '1.0.0',
+            original_file_name: 'sensor_sketch_v1.0.0.ino'
+        };
+
+        const cmp = compareSemver(currentCodeVersion, activeCode.code_version);
+        const result = cmp < 0 ? 'UPDATE_AVAILABLE' : 'CURRENT';
+
+        return sendJson(res, {
+            success: true,
+            result,
+            activeVersion: activeCode.code_version,
+            reportedVersion: currentCodeVersion,
+            downloadUrl: `/api/v1/sensors/code/download`
+        });
+    }
+
+    if ((pathname === '/api/v1/sensors/code/download' || pathname === '/api/v1/sensors/code-file/download') && method === 'GET') {
+        const tokenQuery = parsedUrl.searchParams.get('token');
+        if (tokenQuery && !req.headers['authorization']) {
+            req.headers['authorization'] = `Bearer ${tokenQuery}`;
+        }
+        const dev = authenticateSensor(req);
+        if (!dev) return sendError(res, 'Unauthorized', 401);
+
+        res.writeHead(200, {
+            'Content-Type': 'text/plain',
+            'Content-Disposition': 'attachment; filename="sensor_sketch.ino"',
+            'X-Code-Version': '1.0.0'
+        });
+        res.end("// Sensor sketch code v1.0.0\nvoid setup() { Serial.begin(115200); }\nvoid loop() {}\n");
+        return;
     }
 
     if (pathname === '/api/v1/sensors/upload' && method === 'POST') {
@@ -760,22 +804,24 @@ const server = http.createServer(async (req, res) => {
 
         const dev = db.registered_devices[idx];
         const deviceId = dev.device_id;
+        const devPk = dev.id;
 
         // Remove from registered devices
         db.registered_devices.splice(idx, 1);
 
-        // Cascade delete uploaded files for this device
-        db.uploaded_file_records = db.uploaded_file_records.filter(f => f.device_id !== deviceId);
+        // Cascade delete uploaded files for this specific device instance
+        db.uploaded_file_records = db.uploaded_file_records.filter(f => f.registered_device_id !== devPk);
 
-        // Cascade delete daily metrics for this device
-        db.daily_metrics = db.daily_metrics.filter(m => m.device_id !== deviceId);
-
-        // Cascade delete registration requests for this device
-        db.device_registration_requests = db.device_registration_requests.filter(r => r.device_id !== deviceId);
+        // Check if other sensors share this same device_id before deleting shared metrics/requests
+        const hasOtherSensors = db.registered_devices.some(d => d.device_id === deviceId);
+        if (!hasOtherSensors) {
+            db.daily_metrics = db.daily_metrics.filter(m => m.device_id !== deviceId);
+            db.device_registration_requests = db.device_registration_requests.filter(r => r.device_id !== deviceId);
+        }
 
         logAudit(admin.id, admin.username, 'DELETE_DEVICE', 'DEVICE', deviceId, { device_id: deviceId, id: dev.id }, req.socket.remoteAddress);
         saveDb();
-        return sendJson(res, { success: true, message: `Sensor ${deviceId} permanently deleted` });
+        return sendJson(res, { success: true, message: `Sensor ${deviceId} (${devPk}) permanently deleted` });
     }
 
     // Config upload
@@ -1393,7 +1439,7 @@ function renderFullSensors(admin, search, statusFilter) {
 
             rows += `
             <tr>
-                <td><a href="/admin/sensors/${d.device_id}" class="font-mono" style="font-weight: 600; color: var(--accent-500); text-decoration: none;">${d.device_id}</a></td>
+                <td><a href="/admin/sensors/${d.id}" class="font-mono" style="font-weight: 600; color: var(--accent-500); text-decoration: none;">${d.device_id}</a></td>
                 <td><span class="badge ${badgeClass}">${d.status}</span></td>
                 <td style="color: var(--slate-600);">${d.hardware_model || '—'}</td>
                 <td style="font-size: 12px; color: var(--slate-500);">${d.sensor_version || '—'} / ${d.firmware_version || '—'}</td>
@@ -1401,7 +1447,7 @@ function renderFullSensors(admin, search, statusFilter) {
                 <td><strong>${d.upload_count || 0}</strong></td>
                 <td style="font-size: 12px;">${formatBytes(d.total_storage_bytes)}</td>
                 <td style="text-align: right; white-space: nowrap;">
-                    <a href="/admin/sensors/${d.device_id}" class="btn btn-ghost btn-sm">View</a>
+                    <a href="/admin/sensors/${d.id}" class="btn btn-ghost btn-sm">View</a>
                     <button onclick="toggleSensorStatus('${d.id}', '${toggleAction}')" class="btn btn-ghost btn-sm" style="${toggleColor}">${toggleLabel}</button>
                     <button onclick="regenerateToken('${d.id}')" class="btn btn-secondary btn-sm">Token</button>
                 </td>
@@ -1487,7 +1533,7 @@ function renderFullSensorDetail(admin, dev) {
             <div class="card-header">
                 <div>
                     <h3 class="card-title font-mono">${dev.device_id}</h3>
-                    <p class="card-desc">Registered on ${formatDate(dev.registered_at)}</p>
+                    <p class="card-desc">Instance ID: <span class="font-mono" style="font-size: 11px;">${dev.id}</span> &bull; Registered on ${formatDate(dev.registered_at)}</p>
                 </div>
                 <div><span class="badge ${badgeClass}">${dev.status}</span></div>
             </div>
